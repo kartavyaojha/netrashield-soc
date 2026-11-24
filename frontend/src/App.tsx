@@ -1,35 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import {
-  ShieldAlert,
-  Terminal,
-  Database,
-  Grid,
-  Settings,
-  Shield,
-  Activity,
-  Play,
-  CheckCircle2,
-  AlertTriangle
-} from 'lucide-react';
-import { ThreatTriageView } from './components/ThreatTriageView';
-import { LiveSyslogView } from './components/LiveSyslogView';
-import { IocManagerView } from './components/IocManagerView';
-import { MitreMatrixView } from './components/MitreMatrixView';
-import { SettingsView } from './components/SettingsView';
-import { TriageResult, IncidentStatus } from './types/soc';
-
-type ActiveTab = 'triage' | 'syslog' | 'ioc' | 'mitre' | 'settings';
+import { BonanzaNavbar } from './components/BonanzaNavbar';
+import { BonanzaHero } from './components/BonanzaHero';
+import { BonanzaPipelineShowcase } from './components/BonanzaPipelineShowcase';
+import { BonanzaMarquee } from './components/BonanzaMarquee';
+import { BonanzaCoreCards } from './components/BonanzaCoreCards';
+import { BonanzaBentoGrid } from './components/BonanzaBentoGrid';
+import { BonanzaManifestoFooter } from './components/BonanzaManifestoFooter';
+import { EmbeddedSocWorkbench } from './components/EmbeddedSocWorkbench';
+import type { TriageResult, IncidentStatus } from './types/soc';
 
 export const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<ActiveTab>('triage');
+  const [fullScreenWorkbench, setFullScreenWorkbench] = useState(false);
   const [triageData, setTriageData] = useState<TriageResult | null>(null);
   const [loadingTriage, setLoadingTriage] = useState(false);
-  const [engineStatus, setEngineStatus] = useState('ML Engine: Online • Port 5140: Ready');
+  const [engineOnline, setEngineOnline] = useState(true);
 
-  // Load initial demo triage run on mount
+  // Check health and run initial triage on mount
   useEffect(() => {
-    runInitialTriage();
     checkHealth();
+    runInitialTriage();
   }, []);
 
   const checkHealth = async () => {
@@ -37,12 +26,11 @@ export const App: React.FC = () => {
       const res = await fetch('/api/health');
       if (res.ok) {
         const data = await res.json();
-        if (data.engine_status) {
-          setEngineStatus(data.engine_status);
-        }
+        setEngineOnline(data.status === 'healthy');
       }
     } catch (e) {
-      // Ignore network errors on startup
+      // Backend may be starting
+      setEngineOnline(false);
     }
   };
 
@@ -95,125 +83,96 @@ export const App: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })
       });
-      // Update local state
       if (triageData) {
-        const updatedAlerts = triageData.alerts.map(a =>
+        const updated = triageData.alerts.map(a =>
           a.alert_id === alertId ? { ...a, status: newStatus } : a
         );
-        setTriageData({ ...triageData, alerts: updatedAlerts });
+        setTriageData({ ...triageData, alerts: updated });
       }
     } catch (e) {
       console.error(e);
     }
   };
 
-  const navItems = [
-    { id: 'triage' as ActiveTab, label: 'Threat Triage', icon: ShieldAlert },
-    { id: 'syslog' as ActiveTab, label: 'Live Syslog Stream', icon: Terminal },
-    { id: 'ioc' as ActiveTab, label: 'IOC Watchlist', icon: Database },
-    { id: 'mitre' as ActiveTab, label: 'MITRE ATT&CK Matrix', icon: Grid },
-    { id: 'settings' as ActiveTab, label: 'System Settings', icon: Settings }
-  ];
+  const scrollToWorkbench = () => {
+    const el = document.getElementById('pipeline-showcase');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const handleLaunchTriageCTA = () => {
+    setFullScreenWorkbench(true);
+    runInitialTriage();
+  };
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden text-slate-100 font-sans">
-      {/* LEFT FROSTED GLASS SIDEBAR */}
-      <aside className="w-64 glass-panel m-3 mr-0 flex flex-col justify-between p-4 border border-white/10 shrink-0">
-        <div>
-          {/* Branded Header */}
-          <div className="flex items-center space-x-3 px-2 py-3 border-b border-white/10">
-            <div className="p-2.5 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 text-white shadow-cyan-glow">
-              <Shield className="w-6 h-6" />
-            </div>
+    <div className="min-h-screen bg-[#07090E] text-[#F3F4F6] selection:bg-cyan-500 selection:text-slate-950 flex flex-col font-sans">
+      {/* Sticky Minimal Navbar */}
+      <BonanzaNavbar
+        fullScreenWorkbench={fullScreenWorkbench}
+        onToggleFullScreen={() => setFullScreenWorkbench(!fullScreenWorkbench)}
+        onLaunchTriageClick={handleLaunchTriageCTA}
+        engineOnline={engineOnline}
+      />
+
+      {/* Main Content: Two-Mode Experience */}
+      {fullScreenWorkbench ? (
+        /* Full-Screen Distraction-Free Workbench Mode */
+        <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 animate-in fade-in duration-300">
+          <div className="mb-4 flex items-center justify-between">
             <div>
-              <div className="flex items-center space-x-1.5">
-                <span className="font-bold text-sm tracking-wide text-white">NetraShield SOC</span>
-                <span className="px-1.5 py-0.2 rounded text-[10px] bg-cyan-500/20 text-cyan-300 font-mono border border-cyan-500/30">
-                  v2.4.0
-                </span>
-              </div>
-              <p className="text-[10px] text-slate-400 italic">Kartavya's Blue-Team Workbench</p>
+              <h2 className="text-2xl font-bold font-grotesk text-white">Full-Screen Threat Operations Center</h2>
+              <p className="text-xs text-slate-400 font-sans">Autonomous Blue-Team correlation, live syslog, and MITRE mapping</p>
             </div>
-          </div>
-
-          {/* Nav Items */}
-          <nav className="mt-6 space-y-1.5">
-            {navItems.map(item => {
-              const Icon = item.icon;
-              const isActive = activeTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${
-                    isActive
-                      ? 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 shadow-cyan-glow'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800/40 border border-transparent'
-                  }`}
-                >
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-cyan-400' : 'text-slate-400'}`} />
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
-          </nav>
-        </div>
-
-        {/* Engine Status Bottom Pill */}
-        <div className="p-3 rounded-xl bg-slate-950/60 border border-white/5 text-[11px] font-mono">
-          <div className="flex items-center space-x-2 text-emerald-400">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="font-semibold truncate">{engineStatus}</span>
-          </div>
-          <p className="text-[10px] text-slate-500 mt-1">Hybrid Risk Fusion: Sigma + ML + IOC</p>
-        </div>
-      </aside>
-
-      {/* MAIN CONTENT AREA */}
-      <div className="flex-1 flex flex-col overflow-hidden m-3">
-        {/* TOP GLASS HEADER BAR */}
-        <header className="glass-panel px-6 py-3.5 mb-3 flex items-center justify-between border border-white/10 shrink-0">
-          <div className="flex items-center space-x-3">
-            <span className="text-xs uppercase tracking-wider text-slate-400 font-semibold">Active Session:</span>
-            <div className="flex items-center space-x-2 px-3 py-1 rounded-full bg-slate-900/60 border border-white/10 text-xs font-mono">
-              <span className="w-2 h-2 rounded-full bg-cyan-400" />
-              <span className="text-slate-300">Telemetry Stream Active</span>
-              <span className="text-slate-500">•</span>
-              <span className="text-cyan-400">{triageData?.total_events || 30} Events Parsed</span>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-3">
             <button
-              onClick={() => runInitialTriage()}
-              className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-gradient-to-r from-cyan-500/20 to-indigo-500/20 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-500/30 transition-all flex items-center space-x-1.5"
+              onClick={() => setFullScreenWorkbench(false)}
+              className="px-4 py-2 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/20 text-slate-200 transition-colors"
             >
-              <Play className="w-3.5 h-3.5 fill-current" />
-              <span>Load Synthetic Attack Demo</span>
+              Exit to Product Showcase
             </button>
           </div>
-        </header>
-
-        {/* MAIN TAB VIEW VIEWPORT */}
-        <main className="flex-1 overflow-y-auto pr-1">
-          {activeTab === 'triage' && (
-            <ThreatTriageView
-              triageData={triageData}
-              loading={loadingTriage}
-              onRunTriage={handleRunTriage}
-              onUpdateStatus={handleUpdateStatus}
-            />
-          )}
-
-          {activeTab === 'syslog' && <LiveSyslogView />}
-
-          {activeTab === 'ioc' && <IocManagerView />}
-
-          {activeTab === 'mitre' && <MitreMatrixView />}
-
-          {activeTab === 'settings' && <SettingsView />}
+          <EmbeddedSocWorkbench
+            triageData={triageData}
+            loading={loadingTriage}
+            onRunTriage={handleRunTriage}
+            onUpdateStatus={handleUpdateStatus}
+            isFullScreen={true}
+            onToggleFullScreen={() => setFullScreenWorkbench(false)}
+          />
         </main>
-      </div>
+      ) : (
+        /* Bonanza-Style Showcase Mode */
+        <main className="flex-1 flex flex-col">
+          {/* Section 2: Editorial Hero */}
+          <BonanzaHero
+            onScrollToWorkbench={scrollToWorkbench}
+            onRunQuickDemo={runInitialTriage}
+            loading={loadingTriage}
+          />
+
+          {/* Section 3: Interactive 4-Step Pipeline + Embedded Live Product Frame */}
+          <BonanzaPipelineShowcase
+            triageData={triageData}
+            loading={loadingTriage}
+            onRunTriage={handleRunTriage}
+            onUpdateStatus={handleUpdateStatus}
+            onToggleFullScreen={() => setFullScreenWorkbench(true)}
+          />
+
+          {/* Section 4: Infinite Scrolling Marquee */}
+          <BonanzaMarquee />
+
+          {/* Section 5: 3-Column Core Engine Cards */}
+          <BonanzaCoreCards />
+
+          {/* Section 6: Bento Detection Showcase Grid */}
+          <BonanzaBentoGrid />
+
+          {/* Section 7: Bold Manifesto Strip & Multi-Column Footer */}
+          <BonanzaManifestoFooter />
+        </main>
+      )}
     </div>
   );
 };
