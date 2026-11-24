@@ -1,0 +1,25 @@
+# NetraShield SOC 2.4.0 Configuration
+server:
+  host: "127.0.0.1"
+  port: 8000
+  static_port: 7860
+  syslog_port: 5140
+  syslog_protocol: "udp"
+
+detection:
+  min_risk_threshold: 40.0
+  contamination: 0.05
+  worker_threads: 4
+  max_memory_ceiling_mb: 2048
+  default_export_format: "json"
+
+ml:
+  n_estimators: 100
+  random_state: 42
+  contamination: 0.05
+
+storage:
+  database_path: "data/netrashield.db"
+  ioc_store_path: "intel/ioc_store.json"
+  sigma_rules_path: "rules/sigma"
+  log_path: "logs/netrashield.log"

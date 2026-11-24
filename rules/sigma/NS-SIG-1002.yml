@@ -1,0 +1,27 @@
+title: LSASS Memory Dumping via Procdump or Mimikatz
+id: NS-SIG-1002
+status: production
+description: Detects attempts to access or dump the memory of the Local Security Authority Subsystem Service (LSASS) for credential theft.
+author: Kartavya
+date: 2026/01/15
+references:
+  - https://attack.mitre.org/techniques/T1003/001/
+tags:
+  - attack.credential_access
+  - attack.t1003.001
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection:
+    CommandLine|contains:
+      - 'lsass.exe'
+      - 'sekurlsa'
+      - 'logonpasswords'
+      - 'procdump -ma'
+      - 'comsvcs.dll, MiniDump'
+      - 'MiniDumpWriteDump'
+  condition: selection
+falsepositives:
+  - Security scanning or legitimate memory analysis by diagnostic tools
+level: critical

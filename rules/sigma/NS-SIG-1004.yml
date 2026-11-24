@@ -1,0 +1,25 @@
+title: SSH Password Guessing and Brute-Force Activity
+id: NS-SIG-1004
+status: production
+description: Detects multiple failed SSH authentication attempts indicating password spraying or brute force attacks.
+author: Kartavya
+date: 2026/01/15
+references:
+  - https://attack.mitre.org/techniques/T1110/
+tags:
+  - attack.credential_access
+  - attack.t1110
+logsource:
+  category: network_connection
+  product: linux
+detection:
+  selection:
+    event.action|contains:
+      - 'Failed password for'
+      - 'Invalid user'
+      - 'authentication failure'
+      - 'sshd'
+  condition: selection
+falsepositives:
+  - User forgetting password
+level: medium

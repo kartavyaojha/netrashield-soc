@@ -1,0 +1,30 @@
+title: Suspicious Encoded PowerShell Execution
+id: NS-SIG-1001
+status: production
+description: Detects execution of PowerShell with base64 encoded command arguments often utilized by downloaders and malware.
+author: Kartavya
+date: 2026/01/15
+references:
+  - https://attack.mitre.org/techniques/T1059/001/
+tags:
+  - attack.execution
+  - attack.t1059.001
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+    CommandLine|contains:
+      - ' -enc '
+      - ' -EncodedCommand '
+      - ' -e '
+      - 'FromBase64String'
+      - 'IEX'
+      - 'Invoke-Expression'
+  condition: selection
+falsepositives:
+  - Legitimate administrative automation scripts
+level: high
