@@ -18,6 +18,11 @@ __pycache__/
 frontend/dist/
 frontend/.tmp/
 
+# Temporary / Scratch Scripts
+scripts/
+*.tmp
+*.log
+
 # OS / Editor files
 .DS_Store
 Thumbs.db

@@ -11,38 +11,38 @@ body {
   min-height: 100vh;
   background-color: #07090E;
   background-image: 
-    radial-gradient(circle, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    radial-gradient(circle, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
     radial-gradient(at 0% 0%, rgba(31, 64, 224, 0.12) 0px, transparent 50%),
     radial-gradient(at 100% 10%, rgba(6, 182, 212, 0.10) 0px, transparent 40%),
     radial-gradient(at 50% 80%, rgba(28, 203, 176, 0.06) 0px, transparent 50%);
   background-size: 28px 28px, 100% 100%, 100% 100%, 100% 100%;
-  background-attachment: fixed;
   color: #F3F4F6;
   font-family: 'Space Grotesk', 'Inter', -apple-system, sans-serif;
   overflow-x: hidden;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Bonanza Hairline Card Surface */
+/* Fast GPU-Accelerated Card Surface (No heavy repaints) */
 .bonanza-card {
-  background: rgba(13, 17, 26, 0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(13, 17, 26, 0.88);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 16px 48px -8px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.45);
   border-radius: 24px;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateZ(0);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .bonanza-card:hover {
   border-color: rgba(255, 255, 255, 0.16);
-  box-shadow: 0 24px 64px -12px rgba(6, 182, 212, 0.12);
+  box-shadow: 0 20px 50px -10px rgba(6, 182, 212, 0.12);
   transform: translateY(-2px);
 }
 
 .bonanza-card-active {
-  background: rgba(17, 23, 38, 0.85);
+  background: rgba(17, 23, 38, 0.95);
   border-color: rgba(6, 182, 212, 0.35);
-  box-shadow: 0 24px 64px -12px rgba(6, 182, 212, 0.2);
+  box-shadow: 0 20px 50px -10px rgba(6, 182, 212, 0.18);
 }
 
 /* Hairline border utility */
@@ -58,15 +58,16 @@ body {
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* Infinite Marquee Animation */
+/* Fast Marquee (transform3d hardware accelerated) */
 @keyframes marquee {
-  0% { transform: translateX(0%); }
-  100% { transform: translateX(-50%); }
+  0% { transform: translate3d(0%, 0, 0); }
+  100% { transform: translate3d(-50%, 0, 0); }
 }
 
 .animate-marquee {
   display: flex;
   width: max-content;
+  will-change: transform;
   animation: marquee 28s linear infinite;
 }
 
@@ -79,7 +80,8 @@ body {
   position: relative;
   overflow: hidden;
   border-radius: 9999px;
-  transition: all 0.25s ease;
+  transform: translateZ(0);
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .bonanza-btn-text-roll {
@@ -93,7 +95,7 @@ body {
 
 .bonanza-btn-text-roll span {
   display: block;
-  transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+  transition: transform 0.25s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .bonanza-btn:hover .bonanza-btn-text-roll span:first-child {
@@ -104,7 +106,29 @@ body {
   transform: translateY(-100%);
 }
 
-/* Custom Cyber Scrollbar */
+/* CRT Retro Scanline Mode */
+.crt-screen {
+  position: relative;
+  overflow: hidden;
+}
+
+.crt-screen::before {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%);
+  z-index: 20;
+  background-size: 100% 3px;
+  pointer-events: none;
+}
+
+.crt-phosphor {
+  text-shadow: 0 0 4px rgba(28, 203, 176, 0.5);
+  color: #1CCBB0 !important;
+}
+
+/* Fast Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 5px;
   height: 5px;

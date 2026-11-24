@@ -12,7 +12,12 @@ import {
   AlertTriangle,
   X,
   ExternalLink,
-  Cpu
+  Cpu,
+  Share2,
+  Table,
+  Binary,
+  Copy,
+  Check
 } from 'lucide-react';
 import {
   BarChart,
@@ -25,7 +30,9 @@ import {
   Pie,
   Cell
 } from 'recharts';
-import { AlertIncident, TriageResult, IncidentStatus } from '../types/soc';
+import type { AlertIncident, TriageResult, IncidentStatus } from '../types/soc';
+import { AttackGraphView } from './AttackGraphView';
+import { sound } from '../utils/audio';
 
 interface ThreatTriageViewProps {
   triageData: TriageResult | null;
@@ -48,15 +55,19 @@ export const ThreatTriageView: React.FC<ThreatTriageViewProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [severityFilter, setSeverityFilter] = useState<string>('ALL');
   const [activeIncident, setActiveIncident] = useState<AlertIncident | null>(null);
+  const [viewMode, setViewMode] = useState<'table' | 'graph'>('table');
+  const [hexViewMode, setHexViewMode] = useState<'parsed' | 'hex'>('parsed');
 
   const handleFileDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       setSelectedFile(e.dataTransfer.files[0]);
+      sound.playTick();
     }
   };
 
   const handleTriggerRun = () => {
+    sound.playTick();
     const fd = new FormData();
     if (selectedFile) {
       fd.append('files', selectedFile);
@@ -66,6 +77,7 @@ export const ThreatTriageView: React.FC<ThreatTriageViewProps> = ({
     fd.append('contamination', contamination.toString());
     fd.append('worker_threads', workerThreads.toString());
     onRunTriage(fd);
+    sound.playChirp();
   };
 
   const kpis = triageData?.kpis || {
@@ -101,35 +113,53 @@ export const ThreatTriageView: React.FC<ThreatTriageViewProps> = ({
     }
   };
 
+  // Generate 16-byte hex dump of a payload string
+  const generateHexDump = (payload: string) => {
+    const bytes = new TextEncoder().encode(payload);
+    const rows = [];
+    for (let i = 0; i < Math.min(bytes.length, 128); i += 16) {
+      const chunk = bytes.slice(i, i + 16);
+      const hex = Array.from(chunk)
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join(' ');
+      const ascii = Array.from(chunk)
+        .map(b => (b >= 32 && b <= 126 ? String.fromCharCode(b) : '.'))
+        .join('');
+      const offset = i.toString(16).padStart(8, '0');
+      rows.push({ offset, hex: hex.padEnd(48, ' '), ascii });
+    }
+    return rows;
+  };
+
   return (
     <div className="space-y-6">
       {/* TOP ROW: 4 GLASS KPI CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Events */}
-        <div className="glass-card p-5 relative overflow-hidden group">
+        <div className="bonanza-card p-5 group">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium uppercase tracking-wider text-slate-400">Total Events Parsed</p>
+              <p className="text-xs font-medium uppercase tracking-wider text-slate-400 font-mono">Total Events Parsed</p>
               <h3 className="text-3xl font-bold font-mono text-white mt-1">
                 {kpis.total_events.toLocaleString()}
               </h3>
             </div>
             <div className="p-3 bg-cyan-500/10 rounded-xl border border-cyan-500/20 text-cyan-400">
-              <Activity className="w-6 h-6" />
+              <Activity className="w-5 h-5" />
             </div>
           </div>
-          <div className="mt-3 flex items-center text-xs text-slate-400">
+          <div className="mt-3 flex items-center text-xs text-slate-400 font-mono">
             <span className="text-cyan-400 font-medium">ECS Normalizer</span>
             <span className="mx-2">•</span>
-            <span>Sysmon, EVTX, PCAP, Syslog</span>
+            <span>Sysmon, EVTX, PCAP</span>
           </div>
         </div>
 
         {/* Critical Alerts */}
-        <div className="glass-card p-5 relative overflow-hidden border-rose-500/20 group">
+        <div className="bonanza-card p-5 border-rose-500/20 group">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium uppercase tracking-wider text-rose-300">Critical Alerts</p>
+              <p className="text-xs font-medium uppercase tracking-wider text-rose-300 font-mono">Critical Alerts</p>
               <div className="flex items-baseline space-x-2 mt-1">
                 <h3 className="text-3xl font-bold font-mono text-rose-400">
                   {kpis.critical_alerts}
@@ -141,51 +171,51 @@ export const ThreatTriageView: React.FC<ThreatTriageViewProps> = ({
               </div>
             </div>
             <div className="p-3 bg-rose-500/10 rounded-xl border border-rose-500/30 text-rose-400">
-              <ShieldAlert className="w-6 h-6" />
+              <ShieldAlert className="w-5 h-5" />
             </div>
           </div>
-          <div className="mt-3 flex items-center text-xs text-rose-400/80">
+          <div className="mt-3 flex items-center text-xs text-rose-400/80 font-mono">
             <span>Risk Score &gt;= 85.0</span>
             <span className="mx-2">•</span>
-            <span>Immediate Triage Req.</span>
+            <span>Immediate Triage</span>
           </div>
         </div>
 
         {/* Avg Anomaly Risk Score */}
-        <div className="glass-card p-5 relative overflow-hidden group">
+        <div className="bonanza-card p-5 group">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium uppercase tracking-wider text-slate-400">Avg Anomaly Risk Score</p>
+              <p className="text-xs font-medium uppercase tracking-wider text-slate-400 font-mono">Avg Anomaly Risk</p>
               <h3 className="text-3xl font-bold font-mono text-indigo-400 mt-1">
                 {kpis.avg_risk_score}
                 <span className="text-sm text-slate-500 ml-1">/ 100</span>
               </h3>
             </div>
             <div className="p-3 bg-indigo-500/10 rounded-xl border border-indigo-500/20 text-indigo-400">
-              <Cpu className="w-6 h-6" />
+              <Cpu className="w-5 h-5" />
             </div>
           </div>
-          <div className="mt-3 flex items-center text-xs text-slate-400">
-            <span>Sigma + Isolation Forest Fusion</span>
+          <div className="mt-3 flex items-center text-xs text-slate-400 font-mono">
+            <span>Sigma + Isolation Forest</span>
           </div>
         </div>
 
         {/* Triage Latency */}
-        <div className="glass-card p-5 relative overflow-hidden group">
+        <div className="bonanza-card p-5 group">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium uppercase tracking-wider text-slate-400">Triage Latency</p>
+              <p className="text-xs font-medium uppercase tracking-wider text-slate-400 font-mono">Triage Latency</p>
               <h3 className="text-3xl font-bold font-mono text-emerald-400 mt-1">
                 {kpis.latency_ms}
                 <span className="text-sm font-normal text-slate-400 ml-1">ms</span>
               </h3>
             </div>
             <div className="p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20 text-emerald-400">
-              <Zap className="w-6 h-6" />
+              <Zap className="w-5 h-5" />
             </div>
           </div>
           <div className="mt-3 flex items-center text-xs text-emerald-400/90 font-mono">
-            <span>&lt; 3000ms sub-3s benchmark passed</span>
+            <span>&lt; 3000ms sub-3s SLA verified</span>
           </div>
         </div>
       </div>
@@ -193,9 +223,9 @@ export const ThreatTriageView: React.FC<ThreatTriageViewProps> = ({
       {/* CONTROL & ANALYTICS ROW */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* LEFT PANEL: Ingestion & Policy */}
-        <div className="lg:col-span-5 glass-panel p-6 flex flex-col justify-between space-y-5">
+        <div className="lg:col-span-5 bonanza-card p-6 flex flex-col justify-between space-y-5">
           <div>
-            <div className="flex items-center space-x-2 text-white font-semibold mb-3">
+            <div className="flex items-center space-x-2 text-white font-semibold mb-3 font-grotesk">
               <Sliders className="w-5 h-5 text-cyan-400" />
               <span>Ingestion & Detection Policy</span>
             </div>
@@ -215,14 +245,15 @@ export const ThreatTriageView: React.FC<ThreatTriageViewProps> = ({
                 onChange={e => {
                   if (e.target.files && e.target.files[0]) {
                     setSelectedFile(e.target.files[0]);
+                    sound.playTick();
                   }
                 }}
               />
               <UploadCloud className="w-8 h-8 text-cyan-400 mx-auto mb-2 opacity-80" />
-              <p className="text-sm font-medium text-slate-200">
+              <p className="text-sm font-medium text-slate-200 font-grotesk">
                 {selectedFile ? selectedFile.name : 'Drop telemetry file or browse'}
               </p>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-slate-500 mt-1 font-mono">
                 Supported: .json, .csv, .evtx, .pcap, .log (Sysmon, Syslog)
               </p>
             </div>
@@ -234,7 +265,10 @@ export const ThreatTriageView: React.FC<ThreatTriageViewProps> = ({
               </span>
               <button
                 type="button"
-                onClick={() => setUseDemo(!useDemo)}
+                onClick={() => {
+                  setUseDemo(!useDemo);
+                  sound.playTick();
+                }}
                 className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors ${
                   useDemo ? 'bg-cyan-500' : 'bg-slate-700'
                 }`}
@@ -247,7 +281,7 @@ export const ThreatTriageView: React.FC<ThreatTriageViewProps> = ({
               </button>
             </div>
 
-            {/* Threshold Sliders */}
+            {/* Threshold Sliders with Audio Feedback */}
             <div className="space-y-4 mt-4">
               <div>
                 <div className="flex justify-between text-xs text-slate-300 mb-1">
@@ -259,7 +293,10 @@ export const ThreatTriageView: React.FC<ThreatTriageViewProps> = ({
                   min="10"
                   max="95"
                   value={minRisk}
-                  onChange={e => setMinRisk(Number(e.target.value))}
+                  onChange={e => {
+                    setMinRisk(Number(e.target.value));
+                    sound.playTick();
+                  }}
                   className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-400"
                 />
               </div>
@@ -275,7 +312,10 @@ export const ThreatTriageView: React.FC<ThreatTriageViewProps> = ({
                   max="0.20"
                   step="0.01"
                   value={contamination}
-                  onChange={e => setContamination(Number(e.target.value))}
+                  onChange={e => {
+                    setContamination(Number(e.target.value));
+                    sound.playTick();
+                  }}
                   className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-400"
                 />
               </div>
@@ -290,7 +330,10 @@ export const ThreatTriageView: React.FC<ThreatTriageViewProps> = ({
                   min="1"
                   max="16"
                   value={workerThreads}
-                  onChange={e => setWorkerThreads(Number(e.target.value))}
+                  onChange={e => {
+                    setWorkerThreads(Number(e.target.value));
+                    sound.playTick();
+                  }}
                   className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-400"
                 />
               </div>
@@ -301,10 +344,10 @@ export const ThreatTriageView: React.FC<ThreatTriageViewProps> = ({
           <button
             onClick={handleTriggerRun}
             disabled={loading}
-            className="w-full py-3.5 px-4 rounded-xl font-semibold text-white bg-gradient-to-r from-cyan-500 via-indigo-500 to-cyan-500 hover:from-cyan-400 hover:via-indigo-400 hover:to-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.4)] transition-all flex items-center justify-center space-x-2 disabled:opacity-50"
+            className="w-full py-3.5 px-4 rounded-xl font-semibold text-slate-950 bg-gradient-to-r from-cyan-400 via-emerald-300 to-cyan-400 hover:opacity-95 shadow-pill transition-all flex items-center justify-center space-x-2 disabled:opacity-50 font-grotesk"
           >
             {loading ? (
-              <span className="inline-block animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
+              <span className="inline-block animate-spin rounded-full h-5 w-5 border-2 border-slate-950 border-t-transparent" />
             ) : (
               <>
                 <Play className="w-5 h-5 fill-current" />
@@ -315,8 +358,8 @@ export const ThreatTriageView: React.FC<ThreatTriageViewProps> = ({
         </div>
 
         {/* RIGHT PANEL: Visual Threat Breakdown (Recharts) */}
-        <div className="lg:col-span-7 glass-panel p-6">
-          <h4 className="text-white font-semibold mb-4 flex items-center space-x-2">
+        <div className="lg:col-span-7 bonanza-card p-6">
+          <h4 className="text-white font-semibold mb-4 flex items-center space-x-2 font-grotesk">
             <Activity className="w-5 h-5 text-cyan-400" />
             <span>Threat Severity & MITRE ATT&CK Breakdown</span>
           </h4>
@@ -324,7 +367,7 @@ export const ThreatTriageView: React.FC<ThreatTriageViewProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-64">
             {/* Severity Distribution Donut */}
             <div className="flex flex-col items-center justify-center bg-slate-900/40 rounded-xl p-3 border border-white/5">
-              <p className="text-xs font-medium text-slate-400 mb-2">Alerts by Severity</p>
+              <p className="text-xs font-medium text-slate-400 mb-2 font-mono">Alerts by Severity</p>
               <ResponsiveContainer width="100%" height={180}>
                 <PieChart>
                   <Pie
@@ -353,7 +396,7 @@ export const ThreatTriageView: React.FC<ThreatTriageViewProps> = ({
 
             {/* MITRE Techniques Bar Chart */}
             <div className="flex flex-col bg-slate-900/40 rounded-xl p-3 border border-white/5">
-              <p className="text-xs font-medium text-slate-400 mb-2">Top Triggered MITRE Techniques</p>
+              <p className="text-xs font-medium text-slate-400 mb-2 font-mono">Top Triggered MITRE Techniques</p>
               <ResponsiveContainer width="100%" height={180}>
                 <BarChart
                   data={triageData?.distributions?.mitre?.slice(0, 5) || [
@@ -379,142 +422,185 @@ export const ThreatTriageView: React.FC<ThreatTriageViewProps> = ({
         </div>
       </div>
 
-      {/* BOTTOM PANEL: Correlated Incident Queue */}
-      <div className="glass-panel p-6">
+      {/* BOTTOM PANEL: Correlated Incident Queue with VIEW TOGGLE (Table vs Graph) */}
+      <div className="bonanza-card p-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
-          <div>
-            <h4 className="text-lg font-bold text-white flex items-center space-x-2">
+          <div className="flex items-center space-x-3">
+            <h4 className="text-lg font-bold text-white flex items-center space-x-2 font-grotesk">
               <ShieldAlert className="w-5 h-5 text-rose-400" />
-              <span>Correlated Incident Queue</span>
+              <span>Correlated Incidents</span>
               <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-800 text-cyan-400 border border-cyan-500/20 font-mono">
-                {filteredAlerts.length} Alerts
+                {filteredAlerts.length} Active
               </span>
             </h4>
+
+            {/* View Mode Toggle Pill (Table vs Node Attack Graph) */}
+            <div className="flex items-center p-0.5 rounded-lg bg-slate-900 border border-white/10 text-xs font-mono">
+              <button
+                onClick={() => {
+                  setViewMode('table');
+                  sound.playTick();
+                }}
+                className={`px-3 py-1 rounded-md flex items-center space-x-1.5 transition-all ${
+                  viewMode === 'table' ? 'bg-cyan-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Table className="w-3.5 h-3.5" />
+                <span>Table</span>
+              </button>
+              <button
+                onClick={() => {
+                  setViewMode('graph');
+                  sound.playTick();
+                }}
+                className={`px-3 py-1 rounded-md flex items-center space-x-1.5 transition-all ${
+                  viewMode === 'graph' ? 'bg-cyan-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                <span>Attack Graph</span>
+              </button>
+            </div>
           </div>
 
           {/* Search, Filter, & Export Actions */}
-          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-            <div className="relative flex-1 sm:w-64">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-              <input
-                type="text"
-                placeholder="Search alerts, hosts, commands..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className="w-full bg-slate-900/60 border border-white/10 rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
-              />
+          {viewMode === 'table' && (
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+              <div className="relative flex-1 sm:w-64">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                <input
+                  type="text"
+                  placeholder="Search alerts, hosts, commands..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="w-full bg-slate-900/60 border border-white/10 rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 font-mono"
+                />
+              </div>
+
+              <select
+                value={severityFilter}
+                onChange={e => setSeverityFilter(e.target.value)}
+                className="bg-slate-900/60 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-400 font-mono"
+              >
+                <option value="ALL">All Severities</option>
+                <option value="CRITICAL">Critical</option>
+                <option value="HIGH">High</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="LOW">Low</option>
+              </select>
+
+              <a
+                href="/api/triage/export/csv"
+                className="px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-white/10 flex items-center space-x-1"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>CSV</span>
+              </a>
+              <a
+                href="/api/triage/export/json"
+                className="px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-white/10 flex items-center space-x-1"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>JSON</span>
+              </a>
             </div>
-
-            <select
-              value={severityFilter}
-              onChange={e => setSeverityFilter(e.target.value)}
-              className="bg-slate-900/60 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-400"
-            >
-              <option value="ALL">All Severities</option>
-              <option value="CRITICAL">Critical</option>
-              <option value="HIGH">High</option>
-              <option value="MEDIUM">Medium</option>
-              <option value="LOW">Low</option>
-            </select>
-
-            <a
-              href="/api/triage/export/csv"
-              className="px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-white/10 flex items-center space-x-1"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>CSV</span>
-            </a>
-            <a
-              href="/api/triage/export/json"
-              className="px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-white/10 flex items-center space-x-1"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>JSON</span>
-            </a>
-          </div>
+          )}
         </div>
 
-        {/* Incidents Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="text-slate-400 uppercase tracking-wider border-b border-white/10 bg-slate-900/30">
-              <tr>
-                <th className="py-3 px-3">Alert ID</th>
-                <th className="py-3 px-3">Host</th>
-                <th className="py-3 px-3">Severity</th>
-                <th className="py-3 px-3">Risk Score</th>
-                <th className="py-3 px-3">MITRE ID</th>
-                <th className="py-3 px-3">Detection Title</th>
-                <th className="py-3 px-3">Process / Command</th>
-                <th className="py-3 px-3">Dest IP</th>
-                <th className="py-3 px-3">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5 font-mono">
-              {filteredAlerts.length === 0 ? (
+        {/* Display based on View Mode */}
+        {viewMode === 'graph' ? (
+          <AttackGraphView
+            alerts={filteredAlerts}
+            onSelectAlert={alert => {
+              setActiveIncident(alert);
+              sound.playAlertPulse();
+            }}
+          />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="text-slate-400 uppercase tracking-wider border-b border-white/10 bg-slate-900/30">
                 <tr>
-                  <td colSpan={9} className="py-8 text-center text-slate-500 font-sans">
-                    No incidents match the active filters. Click "Run Threat Correlation" to ingest telemetry.
-                  </td>
+                  <th className="py-3 px-3">Alert ID</th>
+                  <th className="py-3 px-3">Host</th>
+                  <th className="py-3 px-3">Severity</th>
+                  <th className="py-3 px-3">Risk Score</th>
+                  <th className="py-3 px-3">MITRE ID</th>
+                  <th className="py-3 px-3">Detection Title</th>
+                  <th className="py-3 px-3">Process / Command</th>
+                  <th className="py-3 px-3">Dest IP</th>
+                  <th className="py-3 px-3">Status</th>
                 </tr>
-              ) : (
-                filteredAlerts.map(alert => (
-                  <tr
-                    key={alert.alert_id}
-                    onClick={() => setActiveIncident(alert)}
-                    className="hover:bg-slate-800/40 cursor-pointer transition-colors"
-                  >
-                    <td className="py-3 px-3 text-cyan-400 font-semibold">{alert.alert_id}</td>
-                    <td className="py-3 px-3 text-slate-300 font-sans">{alert.host}</td>
-                    <td className="py-3 px-3">
-                      <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-sans font-semibold ${getSeverityBadge(alert.severity)}`}>
-                        {alert.severity}
-                      </span>
-                    </td>
-                    <td className="py-3 px-3">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-16 bg-slate-700/60 rounded-full h-1.5 overflow-hidden">
-                          <div
-                            className={`h-full ${
-                              alert.risk_score >= 85
-                                ? 'bg-rose-500'
-                                : alert.risk_score >= 70
-                                ? 'bg-amber-400'
-                                : 'bg-cyan-400'
-                            }`}
-                            style={{ width: `${alert.risk_score}%` }}
-                          />
-                        </div>
-                        <span className="text-[11px] text-slate-300">{alert.risk_score}</span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-3">
-                      <span className="px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[10px]">
-                        {alert.mitre_id || 'T1027'}
-                      </span>
-                    </td>
-                    <td className="py-3 px-3 text-slate-200 font-sans truncate max-w-xs">{alert.detection_title}</td>
-                    <td className="py-3 px-3 text-slate-400 truncate max-w-xs text-[11px]">
-                      {alert.process_command || alert.process_image || '-'}
-                    </td>
-                    <td className="py-3 px-3 text-slate-300 text-[11px]">{alert.dest_ip || '-'}</td>
-                    <td className="py-3 px-3">
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-sans bg-slate-800 text-slate-300 border border-white/10">
-                        {alert.status}
-                      </span>
+              </thead>
+              <tbody className="divide-y divide-white/5 font-mono">
+                {filteredAlerts.length === 0 ? (
+                  <tr>
+                    <td colSpan={9} className="py-8 text-center text-slate-500 font-sans">
+                      No incidents match the active filters. Click "Run Threat Correlation" to ingest telemetry.
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ) : (
+                  filteredAlerts.map(alert => (
+                    <tr
+                      key={alert.alert_id}
+                      onClick={() => {
+                        setActiveIncident(alert);
+                        sound.playTick();
+                      }}
+                      className="hover:bg-slate-800/40 cursor-pointer transition-colors"
+                    >
+                      <td className="py-3 px-3 text-cyan-400 font-semibold">{alert.alert_id}</td>
+                      <td className="py-3 px-3 text-slate-300 font-sans">{alert.host}</td>
+                      <td className="py-3 px-3">
+                        <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-sans font-semibold ${getSeverityBadge(alert.severity)}`}>
+                          {alert.severity}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-16 bg-slate-700/60 rounded-full h-1.5 overflow-hidden">
+                            <div
+                              className={`h-full ${
+                                alert.risk_score >= 85
+                                  ? 'bg-rose-500'
+                                  : alert.risk_score >= 70
+                                  ? 'bg-amber-400'
+                                  : 'bg-cyan-400'
+                              }`}
+                              style={{ width: `${alert.risk_score}%` }}
+                            />
+                          </div>
+                          <span className="text-[11px] text-slate-300">{alert.risk_score}</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-3">
+                        <span className="px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[10px]">
+                          {alert.mitre_id || 'T1027'}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 text-slate-200 font-sans truncate max-w-xs">{alert.detection_title}</td>
+                      <td className="py-3 px-3 text-slate-400 truncate max-w-xs text-[11px]">
+                        {alert.process_command || alert.process_image || '-'}
+                      </td>
+                      <td className="py-3 px-3 text-slate-300 text-[11px]">{alert.dest_ip || '-'}</td>
+                      <td className="py-3 px-3">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-sans bg-slate-800 text-slate-300 border border-white/10">
+                          {alert.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
-      {/* SLIDE-OVER GLASS INCIDENT DRAWER */}
+      {/* SLIDE-OVER INCIDENT CASE DOSSIER (With Hex Dump & Entropy Spectrogram) */}
       {activeIncident && (
         <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm transition-opacity">
-          <div className="w-full max-w-xl h-full glass-panel border-l border-white/10 p-6 flex flex-col justify-between overflow-y-auto animate-in slide-in-from-right">
+          <div className="w-full max-w-xl h-full bg-[#0D111A]/95 border-l border-white/15 p-6 flex flex-col justify-between overflow-y-auto animate-in slide-in-from-right shadow-2xl">
             <div>
               <div className="flex items-center justify-between pb-4 border-b border-white/10">
                 <div className="flex items-center space-x-3">
@@ -539,7 +625,7 @@ export const ThreatTriageView: React.FC<ThreatTriageViewProps> = ({
 
                 {/* Status Changer */}
                 <div className="p-3 rounded-xl bg-slate-900/40 border border-white/5">
-                  <p className="text-xs font-medium text-slate-400 mb-2">Triage Investigation State:</p>
+                  <p className="text-xs font-medium text-slate-400 mb-2 font-mono">Triage Investigation State:</p>
                   <div className="flex flex-wrap gap-2">
                     {(['Open', 'Investigating', 'Escalated', 'Closed'] as IncidentStatus[]).map(st => (
                       <button
@@ -547,10 +633,11 @@ export const ThreatTriageView: React.FC<ThreatTriageViewProps> = ({
                         onClick={() => {
                           onUpdateStatus(activeIncident.alert_id, st);
                           setActiveIncident({ ...activeIncident, status: st });
+                          sound.playChirp();
                         }}
                         className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
                           activeIncident.status === st
-                            ? 'bg-cyan-500 text-white shadow-cyan-glow'
+                            ? 'bg-cyan-500 text-slate-950 font-bold shadow-cyan-glow'
                             : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700'
                         }`}
                       >
@@ -560,27 +647,32 @@ export const ThreatTriageView: React.FC<ThreatTriageViewProps> = ({
                   </div>
                 </div>
 
-                {/* Shannon Entropy & Risk Metrics */}
+                {/* Shannon Entropy & Risk Metrics + Spectrogram Bar */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="p-3 rounded-xl bg-slate-900/40 border border-white/5">
-                    <p className="text-xs text-slate-400">Shannon Entropy</p>
+                    <p className="text-xs text-slate-400 font-mono">Shannon Entropy</p>
                     <p className="text-xl font-mono font-bold text-cyan-400 mt-1">
                       {activeIncident.shannon_entropy}
                     </p>
-                    <p className="text-[10px] text-slate-500">Normal &lt; 3.6 | Obfuscated &gt; 4.2</p>
+                    <div className="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-emerald-400 via-amber-400 to-rose-500"
+                        style={{ width: `${Math.min((activeIncident.shannon_entropy / 8.0) * 100, 100)}%` }}
+                      />
+                    </div>
                   </div>
                   <div className="p-3 rounded-xl bg-slate-900/40 border border-white/5">
-                    <p className="text-xs text-slate-400">Calculated Risk</p>
+                    <p className="text-xs text-slate-400 font-mono">Calculated Risk</p>
                     <p className="text-xl font-mono font-bold text-rose-400 mt-1">
                       {activeIncident.risk_score} / 100
                     </p>
-                    <p className="text-[10px] text-slate-500">Hybrid ML + Sigma + IOC</p>
+                    <p className="text-[10px] text-slate-500 mt-1 font-mono">Hybrid ML + Sigma + IOC</p>
                   </div>
                 </div>
 
                 {/* MITRE ATT&CK Info */}
                 <div className="p-3 rounded-xl bg-slate-900/40 border border-white/5">
-                  <p className="text-xs font-medium text-slate-400">MITRE ATT&CK Classification:</p>
+                  <p className="text-xs font-medium text-slate-400 font-mono">MITRE ATT&CK Classification:</p>
                   <div className="flex items-center space-x-2 mt-1">
                     <span className="font-mono text-xs px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
                       {activeIncident.mitre_id}
@@ -589,18 +681,48 @@ export const ThreatTriageView: React.FC<ThreatTriageViewProps> = ({
                   </div>
                 </div>
 
-                {/* Process & Command Line */}
+                {/* Payload Inspector: Toggle Parsed vs Raw Hex Dump */}
                 <div>
-                  <p className="text-xs font-medium text-slate-400 mb-1">Process Command Line:</p>
-                  <div className="p-3 rounded-xl bg-slate-950/80 border border-white/5 font-mono text-xs text-cyan-300 break-all">
-                    {activeIncident.process_command || activeIncident.process_image || 'N/A'}
+                  <div className="flex items-center justify-between mb-1.5">
+                    <p className="text-xs font-medium text-slate-400 font-mono">Command Payload Inspector:</p>
+                    <div className="flex items-center space-x-1 bg-slate-900 rounded-lg p-0.5 border border-white/10 text-[10px] font-mono">
+                      <button
+                        onClick={() => setHexViewMode('parsed')}
+                        className={`px-2 py-0.5 rounded ${hexViewMode === 'parsed' ? 'bg-cyan-500 text-slate-950 font-bold' : 'text-slate-400'}`}
+                      >
+                        String
+                      </button>
+                      <button
+                        onClick={() => setHexViewMode('hex')}
+                        className={`px-2 py-0.5 rounded ${hexViewMode === 'hex' ? 'bg-cyan-500 text-slate-950 font-bold' : 'text-slate-400'}`}
+                      >
+                        Hex Dump
+                      </button>
+                    </div>
                   </div>
+
+                  {hexViewMode === 'parsed' ? (
+                    <div className="p-3 rounded-xl bg-slate-950/80 border border-white/5 font-mono text-xs text-cyan-300 break-all select-all">
+                      {activeIncident.process_command || activeIncident.process_image || 'N/A'}
+                    </div>
+                  ) : (
+                    /* 16-Column Hex Dump View */
+                    <div className="p-3 rounded-xl bg-slate-950 border border-white/10 font-mono text-[10px] text-slate-300 overflow-x-auto space-y-0.5 max-h-48">
+                      {generateHexDump(activeIncident.process_command || 'No raw command line available').map(row => (
+                        <div key={row.offset} className="flex space-x-3 leading-tight">
+                          <span className="text-slate-500 select-none">{row.offset}</span>
+                          <span className="text-cyan-400 select-all">{row.hex}</span>
+                          <span className="text-emerald-400 select-all border-l border-white/10 pl-2">{row.ascii}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* ECS Normalized JSON Details */}
                 <div>
-                  <p className="text-xs font-medium text-slate-400 mb-1">Normalized ECS Telemetry:</p>
-                  <pre className="p-3 rounded-xl bg-slate-950/80 border border-white/5 font-mono text-[11px] text-slate-300 overflow-x-auto max-h-56">
+                  <p className="text-xs font-medium text-slate-400 mb-1 font-mono">Normalized ECS Telemetry:</p>
+                  <pre className="p-3 rounded-xl bg-slate-950/80 border border-white/5 font-mono text-[11px] text-slate-300 overflow-x-auto max-h-44">
                     {JSON.stringify(activeIncident.raw_ecs || activeIncident, null, 2)}
                   </pre>
                 </div>
@@ -612,7 +734,7 @@ export const ThreatTriageView: React.FC<ThreatTriageViewProps> = ({
                 onClick={() => setActiveIncident(null)}
                 className="px-4 py-2 rounded-xl text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200"
               >
-                Close Drawer
+                Close Case Dossier
               </button>
             </div>
           </div>

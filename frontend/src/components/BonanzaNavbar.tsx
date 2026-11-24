@@ -1,5 +1,6 @@
-import React from 'react';
-import { Shield, Sparkles, LayoutGrid, Terminal, ArrowUpRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { Shield, LayoutGrid, ArrowUpRight, Volume2, VolumeX } from 'lucide-react';
+import { sound } from '../utils/audio';
 
 interface BonanzaNavbarProps {
   fullScreenWorkbench: boolean;
@@ -14,9 +15,20 @@ export const BonanzaNavbar: React.FC<BonanzaNavbarProps> = ({
   onLaunchTriageClick,
   engineOnline
 }) => {
+  const [audioMuted, setAudioMuted] = useState(false);
+
+  const toggleAudio = () => {
+    const next = !audioMuted;
+    setAudioMuted(next);
+    sound.enabled = !next;
+    if (!next) {
+      sound.playTick();
+    }
+  };
+
   return (
     <header className="sticky top-4 z-50 px-4 sm:px-8 max-w-7xl mx-auto w-full transition-all">
-      <div className="bg-[#0D111A]/80 backdrop-blur-xl border border-white/10 rounded-full px-5 py-3 flex items-center justify-between shadow-pill">
+      <div className="bg-[#0D111A]/95 border border-white/10 rounded-full px-5 py-3 flex items-center justify-between shadow-pill">
         {/* Left: Brand Wordmark */}
         <div className="flex items-center space-x-3">
           <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 via-indigo-500 to-cyan-400 p-[1px] flex items-center justify-center">
@@ -43,8 +55,17 @@ export const BonanzaNavbar: React.FC<BonanzaNavbarProps> = ({
           </nav>
         )}
 
-        {/* Right: Dual-Layer Roll CTA & Mode Toggle */}
+        {/* Right: Audio Mute, Mode Toggle, and Dual-Layer Roll CTA */}
         <div className="flex items-center space-x-2.5">
+          {/* Sound FX Toggle */}
+          <button
+            onClick={toggleAudio}
+            className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 hover:text-white transition-colors"
+            title={audioMuted ? 'Unmute Haptic Audio FX' : 'Mute Haptic Audio FX'}
+          >
+            {audioMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-cyan-400" />}
+          </button>
+
           <button
             onClick={onToggleFullScreen}
             className={`px-3.5 py-1.5 rounded-full text-xs font-medium border transition-all flex items-center space-x-1.5 ${
