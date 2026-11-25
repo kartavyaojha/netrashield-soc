@@ -49,6 +49,10 @@ export const BonanzaNavbar: React.FC<BonanzaNavbarProps> = ({
         {!fullScreenWorkbench && (
           <nav className="hidden md:flex items-center space-x-7 text-xs font-medium text-zinc-400">
             <a href="#pipeline-showcase" className="hover:text-white transition-colors">Workbench</a>
+            <a href="#threat-globe-section" className="text-violet-300 font-semibold hover:text-white transition-colors flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse"></span>
+              <span>3D Threat Globe</span>
+            </a>
             <a href="#core-engine" className="hover:text-white transition-colors">Detection Engine</a>
             <a href="#bento-coverage" className="hover:text-white transition-colors">MITRE Coverage</a>
             <a href="#manifesto" className="hover:text-white transition-colors">Architecture</a>
