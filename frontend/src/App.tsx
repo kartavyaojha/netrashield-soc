@@ -7,7 +7,6 @@ import { BonanzaCoreCards } from './components/BonanzaCoreCards';
 import { BonanzaBentoGrid } from './components/BonanzaBentoGrid';
 import { BonanzaManifestoFooter } from './components/BonanzaManifestoFooter';
 import { EmbeddedSocWorkbench } from './components/EmbeddedSocWorkbench';
-import { ThreatGlobeView } from './components/ThreatGlobeView';
 import { PlexusCursorCanvas } from './components/PlexusCursorCanvas';
 import type { TriageResult, IncidentStatus } from './types/soc';
 import { sound } from './utils/audio';
@@ -126,14 +125,6 @@ export const App: React.FC = () => {
     }
   };
 
-  const scrollToGlobe = () => {
-    sound.playTick();
-    const el = document.getElementById('threat-globe-section');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
   const handleLaunchTriageCTA = () => {
     sound.playChirp();
     setFullScreenWorkbench(true);
@@ -205,7 +196,6 @@ export const App: React.FC = () => {
             {/* Section 2: Editorial Hero */}
             <BonanzaHero
               onScrollToWorkbench={scrollToWorkbench}
-              onScrollToGlobe={scrollToGlobe}
               onRunQuickDemo={() => {
                 sound.playTick();
                 runInitialTriage();
@@ -224,20 +214,6 @@ export const App: React.FC = () => {
                 setFullScreenWorkbench(true);
               }}
             />
-
-            {/* Section 3.5: Dedicated 3D Planetary Threat Intercept Globe */}
-            <section id="threat-globe-section" className="py-16 px-4 sm:px-8 max-w-7xl mx-auto w-full">
-              <div className="text-center mb-8 max-w-3xl mx-auto">
-                <p className="text-xs font-mono uppercase tracking-widest text-violet-400 mb-2">Global Threat Defense</p>
-                <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white font-grotesk">
-                  Interactive 3D Threat Intercept Globe
-                </h2>
-                <p className="mt-2 text-sm text-slate-400 font-sans">
-                  Real-time ballistic trajectory projection from global adversary coordinates to your protected cloud enclave.
-                </p>
-              </div>
-              <ThreatGlobeView />
-            </section>
 
             {/* Section 4: Infinite Scrolling Marquee */}
             <BonanzaMarquee />

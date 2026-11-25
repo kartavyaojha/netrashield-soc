@@ -39,7 +39,6 @@ from netrashield.parser import (
 from netrashield.core_engine import CorrelationEngine
 from netrashield.syslog_server import SyslogServer
 from netrashield.soar import SoarEngine
-from netrashield.geo import get_threat_vectors
 
 app = FastAPI(
     title="NetraShield SOC 2.4.0 API",
@@ -444,16 +443,6 @@ def rollback_soar_action(payload: SoarRollbackRequest):
         return {"success": True, "action": record}
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
-
-
-# ==================== 3D Geo-Threat Intelligence API ====================
-
-@app.get("/api/geo/threats")
-def get_geo_threats():
-    """
-    Returns active global adversary coordinates, attack vectors, and target enclave coordinates.
-    """
-    return get_threat_vectors()
 
 
 # Serve static built frontend if exists

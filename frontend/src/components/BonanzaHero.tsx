@@ -1,17 +1,15 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Zap, ShieldCheck, Cpu, ArrowDown, Play, Globe } from 'lucide-react';
+import { Zap, ShieldCheck, Cpu, ArrowDown, Play } from 'lucide-react';
 
 interface BonanzaHeroProps {
   onScrollToWorkbench: () => void;
-  onScrollToGlobe: () => void;
   onRunQuickDemo: () => void;
   loading: boolean;
 }
 
 export const BonanzaHero: React.FC<BonanzaHeroProps> = ({
   onScrollToWorkbench,
-  onScrollToGlobe,
   onRunQuickDemo,
   loading
 }) => {
@@ -59,21 +57,13 @@ export const BonanzaHero: React.FC<BonanzaHeroProps> = ({
       >
         <button
           onClick={onScrollToWorkbench}
-          className="bonanza-btn group bg-white text-slate-950 font-semibold px-6 py-3.5 text-sm flex items-center space-x-2.5 shadow-bonanza hover:bg-zinc-100"
+          className="bonanza-btn group bg-white text-slate-950 font-semibold px-7 py-3.5 text-sm flex items-center space-x-2.5 shadow-bonanza hover:bg-zinc-100"
         >
           <div className="bonanza-btn-text-roll">
             <span>Explore Interactive Workbench</span>
             <span className="text-indigo-600">Explore Interactive Workbench</span>
           </div>
           <ArrowDown className="w-4 h-4 transition-transform group-hover:translate-y-0.5" />
-        </button>
-
-        <button
-          onClick={onScrollToGlobe}
-          className="bonanza-btn group bg-indigo-600/20 border border-indigo-500/50 hover:bg-indigo-600/30 text-violet-200 font-medium px-5 py-3.5 text-sm flex items-center space-x-2 backdrop-blur-xl transition-all shadow-glow-indigo"
-        >
-          <Globe className="w-4 h-4 text-violet-300 animate-spin" style={{ animationDuration: '12s' }} />
-          <span>Launch 3D Threat Globe</span>
         </button>
 
         <button
