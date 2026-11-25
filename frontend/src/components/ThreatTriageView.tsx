@@ -17,7 +17,9 @@ import {
   Table,
   Binary,
   Copy,
-  Check
+  Check,
+  Lock,
+  Server
 } from 'lucide-react';
 import {
   BarChart,
@@ -57,6 +59,34 @@ export const ThreatTriageView: React.FC<ThreatTriageViewProps> = ({
   const [activeIncident, setActiveIncident] = useState<AlertIncident | null>(null);
   const [viewMode, setViewMode] = useState<'table' | 'graph'>('table');
   const [hexViewMode, setHexViewMode] = useState<'parsed' | 'hex'>('parsed');
+  const [soarExecuting, setSoarExecuting] = useState(false);
+  const [soarSuccessMsg, setSoarSuccessMsg] = useState<string | null>(null);
+
+  const handleExecuteQuickSoar = async (playbookId: string, target: string) => {
+    sound.playChirp();
+    setSoarExecuting(true);
+    setSoarSuccessMsg(null);
+    try {
+      const res = await fetch('/api/soar/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          playbook_id: playbookId,
+          target: target,
+          alert_id: activeIncident?.alert_id
+        })
+      });
+      if (res.ok) {
+        sound.playAlertPulse();
+        setSoarSuccessMsg(`Containment verified: ${target} quarantined!`);
+        setTimeout(() => setSoarSuccessMsg(null), 4000);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSoarExecuting(false);
+    }
+  };
 
   const handleFileDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -644,6 +674,47 @@ export const ThreatTriageView: React.FC<ThreatTriageViewProps> = ({
                         {st}
                       </button>
                     ))}
+                  </div>
+                </div>
+
+                {/* Quick Autonomous SOAR Containment Bar */}
+                <div className="p-3.5 rounded-xl bg-gradient-to-r from-rose-950/30 via-indigo-950/30 to-violet-950/30 border border-indigo-500/30 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-white">
+                      <Zap className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Autonomous SOAR Containment:</span>
+                    </div>
+                    {soarSuccessMsg && (
+                      <span className="text-[11px] text-emerald-400 font-mono animate-in fade-in flex items-center gap-1 font-semibold">
+                        <Check className="w-3.5 h-3.5" /> {soarSuccessMsg}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => handleExecuteQuickSoar('pb-block-ip', activeIncident.dest_ip || '185.220.101.5')}
+                      disabled={soarExecuting}
+                      className="px-2.5 py-1.5 rounded-lg bg-rose-950/80 hover:bg-rose-900 border border-rose-500/40 text-rose-300 text-xs font-medium flex items-center gap-1.5 transition-all shadow-sm disabled:opacity-50"
+                    >
+                      <Lock className="w-3.5 h-3.5 text-rose-400" />
+                      <span>Quarantine IP ({activeIncident.dest_ip || 'Adversary'})</span>
+                    </button>
+                    <button
+                      onClick={() => handleExecuteQuickSoar('pb-isolate-host', activeIncident.host || 'srv-compromised')}
+                      disabled={soarExecuting}
+                      className="px-2.5 py-1.5 rounded-lg bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-500/40 text-indigo-300 text-xs font-medium flex items-center gap-1.5 transition-all shadow-sm disabled:opacity-50"
+                    >
+                      <Server className="w-3.5 h-3.5 text-indigo-400" />
+                      <span>Isolate Host ({activeIncident.host || 'Endpoint'})</span>
+                    </button>
+                    <button
+                      onClick={() => handleExecuteQuickSoar('pb-kill-proc', activeIncident.process_command ? activeIncident.process_command.split(' ')[0] : 'malicious.exe')}
+                      disabled={soarExecuting}
+                      className="px-2.5 py-1.5 rounded-lg bg-amber-950/80 hover:bg-amber-900 border border-amber-500/40 text-amber-300 text-xs font-medium flex items-center gap-1.5 transition-all shadow-sm disabled:opacity-50"
+                    >
+                      <Zap className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Terminate Process</span>
+                    </button>
                   </div>
                 </div>
 

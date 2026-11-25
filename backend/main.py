@@ -38,6 +38,8 @@ from netrashield.parser import (
 )
 from netrashield.core_engine import CorrelationEngine
 from netrashield.syslog_server import SyslogServer
+from netrashield.soar import SoarEngine
+from netrashield.geo import get_threat_vectors
 
 app = FastAPI(
     title="NetraShield SOC 2.4.0 API",
@@ -63,6 +65,7 @@ engine = CorrelationEngine(
     options=options
 )
 syslog_server = SyslogServer(host="127.0.0.1", port=options.syslog_port)
+soar_engine = SoarEngine()
 
 # Auto-start syslog listener
 syslog_server.start()
@@ -90,6 +93,15 @@ class SettingsPayload(BaseModel):
     default_export_format: str = "json"
     min_risk_threshold: float = 40.0
     contamination: float = 0.05
+
+class SoarExecutionRequest(BaseModel):
+    playbook_id: str
+    target: str
+    alert_id: Optional[str] = None
+    params: Optional[Dict[str, Any]] = None
+
+class SoarRollbackRequest(BaseModel):
+    action_id: str
 
 
 # Endpoints
@@ -385,6 +397,63 @@ def save_settings(payload: SettingsPayload):
     opts.contamination = payload.contamination
     opts.save_to_yaml("config.yaml")
     return {"success": True, "message": "Settings saved to config.yaml", "settings": payload.dict()}
+
+
+# ==================== SOAR Autonomous Remediation API ====================
+
+@app.get("/api/soar/playbooks")
+def get_soar_playbooks():
+    """
+    Returns available blue-team automated response playbooks.
+    """
+    return {"playbooks": soar_engine.get_playbooks()}
+
+
+@app.post("/api/soar/execute")
+def execute_soar_playbook(payload: SoarExecutionRequest):
+    """
+    Executes containment playbook against target IP/Host/User/PID.
+    """
+    try:
+        record = soar_engine.execute_playbook(
+            playbook_id=payload.playbook_id,
+            target=payload.target,
+            alert_id=payload.alert_id,
+            params=payload.params
+        )
+        return {"success": True, "action": record}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/api/soar/history")
+def get_soar_history():
+    """
+    Returns audit history of automated SOAR actions taken.
+    """
+    return {"history": soar_engine.history}
+
+
+@app.post("/api/soar/rollback")
+def rollback_soar_action(payload: SoarRollbackRequest):
+    """
+    Rolls back containment action and restores normal network/host state.
+    """
+    try:
+        record = soar_engine.rollback(payload.action_id)
+        return {"success": True, "action": record}
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+# ==================== 3D Geo-Threat Intelligence API ====================
+
+@app.get("/api/geo/threats")
+def get_geo_threats():
+    """
+    Returns active global adversary coordinates, attack vectors, and target enclave coordinates.
+    """
+    return get_threat_vectors()
 
 
 # Serve static built frontend if exists

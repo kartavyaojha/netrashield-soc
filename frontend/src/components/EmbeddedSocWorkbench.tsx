@@ -16,14 +16,18 @@ import {
   Cpu,
   ShieldCheck,
   ChevronRight,
-  ExternalLink
+  ExternalLink,
+  Globe
 } from 'lucide-react';
 import { ThreatTriageView } from './ThreatTriageView';
+import { ThreatGlobeView } from './ThreatGlobeView';
+import { SoarPlaybookView } from './SoarPlaybookView';
 import { LiveSyslogView } from './LiveSyslogView';
 import { IocManagerView } from './IocManagerView';
 import { MitreMatrixView } from './MitreMatrixView';
 import { SettingsView } from './SettingsView';
 import type { TriageResult, IncidentStatus } from '../types/soc';
+import { sound } from '../utils/audio';
 
 interface EmbeddedSocWorkbenchProps {
   triageData: TriageResult | null;
@@ -42,10 +46,12 @@ export const EmbeddedSocWorkbench: React.FC<EmbeddedSocWorkbenchProps> = ({
   isFullScreen = false,
   onToggleFullScreen
 }) => {
-  const [activeTab, setActiveTab] = useState<'triage' | 'syslog' | 'ioc' | 'mitre' | 'settings'>('triage');
+  const [activeTab, setActiveTab] = useState<'triage' | 'globe' | 'soar' | 'syslog' | 'ioc' | 'mitre' | 'settings'>('triage');
 
   const tabs = [
     { id: 'triage' as const, label: 'Threat Triage', icon: ShieldAlert },
+    { id: 'globe' as const, label: '3D Threat Globe', icon: Globe },
+    { id: 'soar' as const, label: 'Autonomous SOAR', icon: Zap },
     { id: 'syslog' as const, label: 'Live Syslog (Port 5140)', icon: Terminal },
     { id: 'ioc' as const, label: 'IOC Watchlist', icon: Database },
     { id: 'mitre' as const, label: 'MITRE Matrix', icon: Grid },
@@ -64,7 +70,10 @@ export const EmbeddedSocWorkbench: React.FC<EmbeddedSocWorkbenchProps> = ({
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => {
+                  sound.playTick();
+                  setActiveTab(tab.id);
+                }}
                 className={`px-3.5 py-1.5 rounded-xl text-xs font-medium flex items-center space-x-2 transition-all ${
                   isActive
                     ? 'bg-indigo-600/25 text-violet-300 border border-indigo-400/50 shadow-[0_0_15px_rgba(99,102,241,0.25)]'
@@ -106,6 +115,8 @@ export const EmbeddedSocWorkbench: React.FC<EmbeddedSocWorkbenchProps> = ({
             onUpdateStatus={onUpdateStatus}
           />
         )}
+        {activeTab === 'globe' && <ThreatGlobeView />}
+        {activeTab === 'soar' && <SoarPlaybookView />}
         {activeTab === 'syslog' && <LiveSyslogView />}
         {activeTab === 'ioc' && <IocManagerView />}
         {activeTab === 'mitre' && <MitreMatrixView />}
