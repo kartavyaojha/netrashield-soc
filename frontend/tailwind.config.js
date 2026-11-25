@@ -7,17 +7,19 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: '#07090E',
-        surface: '#0D111A',
-        card: '#111726',
+        background: '#09090F',
+        surface: '#12111B',
+        card: '#161522',
         cardBorder: 'rgba(255, 255, 255, 0.08)',
         accent: {
-          blue: '#1F40E0',
-          cyan: '#06B6D4',
-          mint: '#1CCBB0',
-          emerald: '#12A87A',
-          amber: '#F2A930',
-          rose: '#F43F5E'
+          indigo: '#6366F1',
+          violet: '#818CF8',
+          purple: '#A855F7',
+          fuchsia: '#D946EF',
+          rose: '#F43F5E',
+          amber: '#F59E0B',
+          emerald: '#10B981',
+          cyan: '#06B6D4'
         }
       },
       fontFamily: {
@@ -34,10 +36,10 @@ export default {
         snugger: '1.15',
       },
       boxShadow: {
-        'bonanza': '0 24px 64px -12px rgba(0, 0, 0, 0.65)',
-        'glow-blue': '0 0 35px rgba(31, 64, 224, 0.25)',
-        'glow-cyan': '0 0 30px rgba(6, 182, 212, 0.25)',
-        'pill': '0 4px 20px rgba(0, 0, 0, 0.4)',
+        'bonanza': '0 24px 64px -12px rgba(0, 0, 0, 0.85)',
+        'glow-indigo': '0 0 35px rgba(99, 102, 241, 0.25)',
+        'glow-violet': '0 0 30px rgba(129, 140, 248, 0.20)',
+        'pill': '0 4px 20px rgba(0, 0, 0, 0.5)',
       },
       borderRadius: {
         '3xl': '24px',

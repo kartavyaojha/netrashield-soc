@@ -132,10 +132,10 @@ export const AttackGraphView: React.FC<AttackGraphViewProps> = ({ alerts, onSele
   }, [alerts]);
 
   const getNodeColor = (type: string, severity: string) => {
-    if (type === 'c2') return '#F43F5E'; // Crimson for C2
+    if (type === 'c2') return '#F43F5E'; // Berry Rose for C2
     if (severity === 'CRITICAL') return '#F43F5E';
     if (severity === 'HIGH') return '#F59E0B';
-    if (severity === 'MEDIUM') return '#0EA5E9';
+    if (severity === 'MEDIUM') return '#818CF8';
     return '#10B981';
   };
 
@@ -148,32 +148,32 @@ export const AttackGraphView: React.FC<AttackGraphViewProps> = ({ alerts, onSele
   };
 
   return (
-    <div className="relative w-full h-[540px] bg-[#07090E] rounded-xl border border-white/10 overflow-hidden select-none">
+    <div className="relative w-full h-[540px] bg-[#0A0912] rounded-xl border border-white/10 overflow-hidden select-none">
       {/* Graph Toolbar */}
       <div className="absolute top-3 left-4 z-10 flex items-center space-x-2">
-        <span className="text-xs font-mono px-3 py-1 rounded-full bg-white/5 border border-white/10 text-slate-300 backdrop-blur-md">
+        <span className="text-xs font-mono px-3 py-1 rounded-full bg-white/5 border border-white/10 text-violet-300 backdrop-blur-md">
           Provenance Causality Graph · {nodes.length} Nodes · {edges.length} Links
         </span>
       </div>
 
-      <div className="absolute top-3 right-4 z-10 flex items-center space-x-1.5 bg-[#0D111A]/90 p-1 rounded-xl border border-white/10 backdrop-blur-md">
+      <div className="absolute top-3 right-4 z-10 flex items-center space-x-1.5 bg-[#12111E]/95 p-1 rounded-xl border border-white/10 backdrop-blur-md">
         <button
           onClick={() => setZoom(z => Math.min(z + 0.15, 1.6))}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5"
+          className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5"
           title="Zoom In"
         >
           <ZoomIn className="w-4 h-4" />
         </button>
         <button
           onClick={() => setZoom(z => Math.max(z - 0.15, 0.7))}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5"
+          className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5"
           title="Zoom Out"
         >
           <ZoomOut className="w-4 h-4" />
         </button>
         <button
           onClick={() => setZoom(1)}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5"
+          className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5"
           title="Reset View"
         >
           <RotateCcw className="w-4 h-4" />
@@ -188,20 +188,16 @@ export const AttackGraphView: React.FC<AttackGraphViewProps> = ({ alerts, onSele
       >
         <defs>
           <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="4" result="blur" />
+            <feGaussianBlur stdDeviation="3.5" result="blur" />
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
-          <linearGradient id="edge-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#06B6D4" stopOpacity="0.4" />
-            <stop offset="100%" stopColor="#F43F5E" stopOpacity="0.8" />
-          </linearGradient>
         </defs>
 
         {/* Column Group Labels */}
-        <text x="120" y="30" textAnchor="middle" fill="#64748B" fontSize="11" fontFamily="JetBrains Mono" fontWeight="bold">HOST ASSETS</text>
-        <text x="380" y="30" textAnchor="middle" fill="#64748B" fontSize="11" fontFamily="JetBrains Mono" fontWeight="bold">PROCESS EXECUTION</text>
-        <text x="640" y="30" textAnchor="middle" fill="#64748B" fontSize="11" fontFamily="JetBrains Mono" fontWeight="bold">MITRE TECHNIQUE</text>
-        <text x="900" y="30" textAnchor="middle" fill="#64748B" fontSize="11" fontFamily="JetBrains Mono" fontWeight="bold">C2 DESTINATION</text>
+        <text x="120" y="30" textAnchor="middle" fill="#6366F1" fontSize="11" fontFamily="JetBrains Mono" fontWeight="bold">HOST ASSETS</text>
+        <text x="380" y="30" textAnchor="middle" fill="#818CF8" fontSize="11" fontFamily="JetBrains Mono" fontWeight="bold">PROCESS EXECUTION</text>
+        <text x="640" y="30" textAnchor="middle" fill="#A855F7" fontSize="11" fontFamily="JetBrains Mono" fontWeight="bold">MITRE TECHNIQUE</text>
+        <text x="900" y="30" textAnchor="middle" fill="#F43F5E" fontSize="11" fontFamily="JetBrains Mono" fontWeight="bold">C2 DESTINATION</text>
 
         {/* Connecting Edges */}
         {edges.map((edge, idx) => {
@@ -220,7 +216,7 @@ export const AttackGraphView: React.FC<AttackGraphViewProps> = ({ alerts, onSele
               <path
                 d={pathD}
                 fill="none"
-                stroke={isHighlighted ? '#06B6D4' : 'rgba(255,255,255,0.12)'}
+                stroke={isHighlighted ? '#818CF8' : 'rgba(255,255,255,0.12)'}
                 strokeWidth={isHighlighted ? 2.5 : 1.2}
                 strokeDasharray={edge.severity === 'CRITICAL' ? '4 3' : 'none'}
               />
@@ -251,7 +247,7 @@ export const AttackGraphView: React.FC<AttackGraphViewProps> = ({ alerts, onSele
                 cy={node.y}
                 r={isSelected ? 22 : 16}
                 fill={color}
-                fillOpacity={isSelected ? 0.25 : 0.12}
+                fillOpacity={isSelected ? 0.3 : 0.15}
                 stroke={color}
                 strokeWidth={isSelected ? 2 : 1}
                 strokeDasharray={isSelected ? '3 3' : 'none'}
@@ -269,7 +265,7 @@ export const AttackGraphView: React.FC<AttackGraphViewProps> = ({ alerts, onSele
                 x={node.x}
                 y={node.y + 24}
                 textAnchor="middle"
-                fill={isSelected ? '#FFFFFF' : '#CBD5E1'}
+                fill={isSelected ? '#FFFFFF' : '#E9D5FF'}
                 fontSize="10"
                 fontFamily="Space Grotesk, sans-serif"
                 fontWeight={isSelected ? 'bold' : 'normal'}
@@ -288,15 +284,15 @@ export const AttackGraphView: React.FC<AttackGraphViewProps> = ({ alerts, onSele
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
-            className="absolute right-4 bottom-4 w-72 bg-[#0D111A]/95 backdrop-blur-xl border border-white/15 rounded-2xl p-4 shadow-2xl z-20 text-xs"
+            className="absolute right-4 bottom-4 w-72 bg-[#12111F]/98 backdrop-blur-xl border border-white/15 rounded-2xl p-4 shadow-2xl z-20 text-xs"
           >
             <div className="flex items-center justify-between pb-2 border-b border-white/10">
-              <span className="font-mono text-[10px] text-cyan-400 uppercase tracking-wider">
+              <span className="font-mono text-[10px] text-violet-300 uppercase tracking-wider">
                 {selectedNode.type.toUpperCase()} NODE
               </span>
               <button
                 onClick={() => setSelectedNode(null)}
-                className="text-slate-400 hover:text-white"
+                className="text-zinc-400 hover:text-white"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -304,16 +300,16 @@ export const AttackGraphView: React.FC<AttackGraphViewProps> = ({ alerts, onSele
             <div className="mt-2.5 space-y-2">
               <h5 className="font-bold text-white text-sm break-all">{selectedNode.label}</h5>
               <div className="flex items-center space-x-2">
-                <span className="text-slate-400">Risk Score:</span>
+                <span className="text-zinc-400">Risk Score:</span>
                 <span className="font-mono font-bold text-rose-400">{selectedNode.risk}/100</span>
                 <span className="px-1.5 py-0.2 rounded text-[10px] bg-rose-500/20 text-rose-300 font-mono">
                   {selectedNode.severity}
                 </span>
               </div>
               {selectedNode.alertRef && (
-                <div className="pt-2 border-t border-white/5 text-[11px] text-slate-300">
-                  <p className="text-slate-400">Linked Incident:</p>
-                  <p className="font-mono text-cyan-300 font-semibold">{selectedNode.alertRef.alert_id}</p>
+                <div className="pt-2 border-t border-white/5 text-[11px] text-zinc-300">
+                  <p className="text-zinc-400">Linked Incident:</p>
+                  <p className="font-mono text-violet-300 font-semibold">{selectedNode.alertRef.alert_id}</p>
                   <p className="line-clamp-2 mt-0.5">{selectedNode.alertRef.detection_title}</p>
                 </div>
               )}

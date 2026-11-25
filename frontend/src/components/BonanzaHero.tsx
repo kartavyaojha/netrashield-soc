@@ -20,11 +20,11 @@ export const BonanzaHero: React.FC<BonanzaHeroProps> = ({
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="inline-flex items-center space-x-2 px-3.5 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-slate-300 mb-8 backdrop-blur-md"
+        className="inline-flex items-center space-x-2 px-3.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/25 text-xs text-zinc-300 mb-8 backdrop-blur-md"
       >
-        <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-        <span className="font-mono text-cyan-300">NetraShield SOC 2.4.0</span>
-        <span className="text-slate-500">•</span>
+        <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
+        <span className="font-mono text-violet-300 font-semibold">NetraShield SOC 2.4.0</span>
+        <span className="text-zinc-600">•</span>
         <span>Kartavya's Autonomous Blue-Team Architecture</span>
       </motion.div>
 
@@ -35,7 +35,7 @@ export const BonanzaHero: React.FC<BonanzaHeroProps> = ({
         transition={{ duration: 0.6, delay: 0.1 }}
         className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tighter leading-tightest text-white max-w-5xl font-grotesk"
       >
-        The blue-team workbench that makes threat triage <span className="bg-gradient-to-r from-blue-400 via-cyan-300 to-emerald-400 bg-clip-text text-transparent">instant.</span>
+        The blue-team workbench that makes threat triage <span className="bg-gradient-to-r from-indigo-400 via-violet-300 to-fuchsia-400 bg-clip-text text-transparent">instant.</span>
       </motion.h1>
 
       {/* Crisp 2-line Subheadline */}
@@ -43,7 +43,7 @@ export const BonanzaHero: React.FC<BonanzaHeroProps> = ({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.2 }}
-        className="mt-6 text-base sm:text-xl text-slate-400 max-w-3xl leading-relaxed font-sans"
+        className="mt-6 text-base sm:text-xl text-zinc-400 max-w-3xl leading-relaxed font-sans"
       >
         What took hours of manual log grep now takes under <strong className="text-white font-semibold">3 seconds</strong>. Sigma rules, Isolation Forest anomaly scoring, and MITRE ATT&CK enrichment—running <strong className="text-white font-semibold">100% locally</strong> in your sandbox.
       </motion.p>
@@ -57,11 +57,11 @@ export const BonanzaHero: React.FC<BonanzaHeroProps> = ({
       >
         <button
           onClick={onScrollToWorkbench}
-          className="bonanza-btn group bg-white text-slate-950 font-semibold px-7 py-3.5 text-sm flex items-center space-x-2.5 shadow-bonanza hover:bg-slate-100"
+          className="bonanza-btn group bg-white text-slate-950 font-semibold px-7 py-3.5 text-sm flex items-center space-x-2.5 shadow-bonanza hover:bg-zinc-100"
         >
           <div className="bonanza-btn-text-roll">
             <span>Explore Interactive Workbench</span>
-            <span className="text-blue-600">Explore Interactive Workbench</span>
+            <span className="text-indigo-600">Explore Interactive Workbench</span>
           </div>
           <ArrowDown className="w-4 h-4 transition-transform group-hover:translate-y-0.5" />
         </button>
@@ -69,9 +69,9 @@ export const BonanzaHero: React.FC<BonanzaHeroProps> = ({
         <button
           onClick={onRunQuickDemo}
           disabled={loading}
-          className="bonanza-btn group bg-white/5 border border-white/10 hover:border-white/25 text-white font-medium px-6 py-3.5 text-sm flex items-center space-x-2 backdrop-blur-xl transition-all"
+          className="bonanza-btn group bg-white/5 border border-white/10 hover:border-indigo-500/40 text-white font-medium px-6 py-3.5 text-sm flex items-center space-x-2 backdrop-blur-xl transition-all"
         >
-          <Play className="w-4 h-4 text-cyan-400 fill-cyan-400/30" />
+          <Play className="w-4 h-4 text-violet-400 fill-violet-400/20" />
           <span>{loading ? 'Correlating Telemetry...' : 'Run Attack Telemetry Demo'}</span>
         </button>
       </motion.div>
@@ -83,17 +83,17 @@ export const BonanzaHero: React.FC<BonanzaHeroProps> = ({
         transition={{ duration: 0.7, delay: 0.4 }}
         className="mt-14 grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-2xl"
       >
-        <div className="bg-white/[0.03] border border-white/5 rounded-2xl py-2.5 px-4 text-center">
-          <p className="text-[11px] uppercase tracking-wider text-slate-500 font-mono">Benchmark</p>
+        <div className="bg-white/[0.03] border border-white/10 rounded-2xl py-2.5 px-4 text-center">
+          <p className="text-[11px] uppercase tracking-wider text-zinc-500 font-mono">Benchmark</p>
           <p className="text-sm font-bold text-emerald-400 font-grotesk mt-0.5">&lt; 3.0s on 10k Events</p>
         </div>
-        <div className="bg-white/[0.03] border border-white/5 rounded-2xl py-2.5 px-4 text-center">
-          <p className="text-[11px] uppercase tracking-wider text-slate-500 font-mono">Detection</p>
-          <p className="text-sm font-bold text-cyan-300 font-grotesk mt-0.5">Sigma + Isolation Forest</p>
+        <div className="bg-white/[0.03] border border-white/10 rounded-2xl py-2.5 px-4 text-center">
+          <p className="text-[11px] uppercase tracking-wider text-zinc-500 font-mono">Detection</p>
+          <p className="text-sm font-bold text-violet-300 font-grotesk mt-0.5">Sigma + Isolation Forest</p>
         </div>
-        <div className="bg-white/[0.03] border border-white/5 rounded-2xl py-2.5 px-4 text-center">
-          <p className="text-[11px] uppercase tracking-wider text-slate-500 font-mono">Privacy</p>
-          <p className="text-sm font-bold text-indigo-300 font-grotesk mt-0.5">Zero Cloud Telemetry Leak</p>
+        <div className="bg-white/[0.03] border border-white/10 rounded-2xl py-2.5 px-4 text-center">
+          <p className="text-[11px] uppercase tracking-wider text-zinc-500 font-mono">Privacy</p>
+          <p className="text-sm font-bold text-indigo-400 font-grotesk mt-0.5">Zero Cloud Telemetry Leak</p>
         </div>
       </motion.div>
     </section>

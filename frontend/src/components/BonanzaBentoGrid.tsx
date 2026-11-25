@@ -7,11 +7,11 @@ export const BonanzaBentoGrid: React.FC = () => {
     <section id="bento-coverage" className="py-20 px-4 sm:px-8 max-w-7xl mx-auto w-full">
       {/* Header */}
       <div className="text-center mb-12 max-w-3xl mx-auto">
-        <p className="text-xs font-mono uppercase tracking-widest text-cyan-400 mb-2">Detection Benchmarks</p>
+        <p className="text-xs font-mono uppercase tracking-widest text-violet-400 mb-2">Detection Benchmarks</p>
         <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white font-grotesk">
           Proven Under Heavy Fire
         </h2>
-        <p className="mt-3 text-sm text-slate-400 font-sans">
+        <p className="mt-3 text-sm text-zinc-400 font-sans">
           Real incident scenarios detected with sub-second hybrid precision across multiple threat vectors.
         </p>
       </div>
@@ -29,23 +29,23 @@ export const BonanzaBentoGrid: React.FC = () => {
             <span className="px-3 py-1 rounded-full text-xs font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
               Throughput Benchmark
             </span>
-            <span className="text-xs font-mono text-slate-500">Vectorized ML Inference</span>
+            <span className="text-xs font-mono text-zinc-500">Vectorized ML Inference</span>
           </div>
 
           <div>
             <div className="flex items-baseline space-x-3 mb-2">
               <span className="text-5xl sm:text-7xl font-bold text-white font-mono tracking-tighter">0.33s</span>
-              <span className="text-slate-400 text-lg font-mono">/ 10,000 events</span>
+              <span className="text-zinc-400 text-lg font-mono">/ 10,000 events</span>
             </div>
             <h4 className="text-xl font-bold text-white font-grotesk mt-2">
               High-Velocity Batch Processing
             </h4>
-            <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-xl font-sans">
+            <p className="text-xs sm:text-sm text-zinc-400 mt-1 max-w-xl font-sans">
               Evaluates 10,000 simultaneous telemetry records through feature matrix vectorization, Shannon entropy calculation, and IsolationForest decision functions in less than half a second.
             </p>
           </div>
 
-          <div className="mt-6 pt-4 border-t border-white/5 flex flex-wrap items-center gap-4 text-xs font-mono text-slate-400">
+          <div className="mt-6 pt-4 border-t border-white/5 flex flex-wrap items-center gap-4 text-xs font-mono text-zinc-400">
             <span>Passes strict &lt; 3000ms SLA</span>
             <span>•</span>
             <span className="text-emerald-400 font-semibold">100% In-Memory NumPy / Scikit-Learn</span>
@@ -68,11 +68,11 @@ export const BonanzaBentoGrid: React.FC = () => {
               <span className="text-xs font-mono text-rose-400 font-bold">94.2 RISK</span>
             </div>
             <h4 className="text-lg font-bold text-white font-grotesk">Encoded PowerShell Execution</h4>
-            <p className="text-xs text-slate-400 mt-2 font-sans">
+            <p className="text-xs text-zinc-400 mt-2 font-sans">
               Catches Base64 encoded download cradles via dual triggers: Sigma rule `NS-SIG-1001` + Shannon entropy H &gt; 4.2.
             </p>
           </div>
-          <div className="mt-6 p-2.5 rounded-xl bg-slate-950 border border-white/5 font-mono text-[11px] text-cyan-300 truncate">
+          <div className="mt-6 p-2.5 rounded-xl bg-black border border-white/10 font-mono text-[11px] text-violet-300 truncate">
             powershell.exe -enc SQBFAFgAIAAoAE4AZQ...
           </div>
         </motion.div>
@@ -93,11 +93,11 @@ export const BonanzaBentoGrid: React.FC = () => {
               <span className="text-xs font-mono text-amber-400 font-bold">89.7 RISK</span>
             </div>
             <h4 className="text-lg font-bold text-white font-grotesk">LSASS Credential Access</h4>
-            <p className="text-xs text-slate-400 mt-2 font-sans">
+            <p className="text-xs text-zinc-400 mt-2 font-sans">
               Flags Procdump, Sekurlsa, and Comsvcs MiniDump attempts with instant incident escalation and SQLite audit persistence.
             </p>
           </div>
-          <div className="mt-6 p-2.5 rounded-xl bg-slate-950 border border-white/5 font-mono text-[11px] text-amber-300 truncate">
+          <div className="mt-6 p-2.5 rounded-xl bg-black border border-white/10 font-mono text-[11px] text-amber-300 truncate">
             procdump.exe -ma lsass.exe C:\Temp\lsass.dmp
           </div>
         </motion.div>
@@ -108,31 +108,31 @@ export const BonanzaBentoGrid: React.FC = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.3 }}
-          className="md:col-span-8 bonanza-card p-6 sm:p-8 flex flex-col justify-between border-cyan-500/20 hover:border-cyan-500/40"
+          className="md:col-span-8 bonanza-card p-6 sm:p-8 flex flex-col justify-between border-indigo-500/25 hover:border-indigo-500/45"
         >
           <div className="flex items-center justify-between mb-4">
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-indigo-500/10 text-violet-300 border border-indigo-500/30">
               T1071.001
             </span>
-            <span className="text-xs font-mono text-cyan-400 font-bold">92.0+ RISK (IOC FLOOR)</span>
+            <span className="text-xs font-mono text-rose-400 font-bold">92.0+ RISK (IOC FLOOR)</span>
           </div>
 
           <div>
             <div className="flex items-baseline space-x-2">
-              <span className="text-3xl sm:text-5xl font-bold text-cyan-300 font-mono">185.220.101.42</span>
+              <span className="text-3xl sm:text-5xl font-bold text-violet-300 font-mono">185.220.101.42</span>
             </div>
             <h4 className="text-xl font-bold text-white font-grotesk mt-2">
               DarkHydrus / Tor Exit Node C2 Correlated
             </h4>
-            <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-xl font-sans">
+            <p className="text-xs sm:text-sm text-zinc-400 mt-1 max-w-xl font-sans">
               Instant indicator matching from local threat intel stores elevates any outbound beaconing event directly to CRITICAL status with zero external network queries.
             </p>
           </div>
 
-          <div className="mt-6 pt-4 border-t border-white/5 flex flex-wrap items-center gap-4 text-xs font-mono text-slate-400">
+          <div className="mt-6 pt-4 border-t border-white/5 flex flex-wrap items-center gap-4 text-xs font-mono text-zinc-400">
             <span>intel/ioc_store.json Watchlist</span>
             <span>•</span>
-            <span className="text-cyan-400">Hot-reloaded in memory</span>
+            <span className="text-violet-400">Hot-reloaded in memory</span>
           </div>
         </motion.div>
       </div>

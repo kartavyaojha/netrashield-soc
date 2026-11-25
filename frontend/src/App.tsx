@@ -7,6 +7,7 @@ import { BonanzaCoreCards } from './components/BonanzaCoreCards';
 import { BonanzaBentoGrid } from './components/BonanzaBentoGrid';
 import { BonanzaManifestoFooter } from './components/BonanzaManifestoFooter';
 import { EmbeddedSocWorkbench } from './components/EmbeddedSocWorkbench';
+import { PlexusCursorCanvas } from './components/PlexusCursorCanvas';
 import type { TriageResult, IncidentStatus } from './types/soc';
 import { sound } from './utils/audio';
 
@@ -131,13 +132,16 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#07090E] text-[#F3F4F6] selection:bg-cyan-500 selection:text-slate-950 flex flex-col font-sans overflow-x-hidden">
-      {/* High-Performance Cursor Spotlight: Runs on GPU layer without re-rendering React */}
+    <div className="relative min-h-screen bg-[#09090F] text-[#FAF5FF] selection:bg-indigo-600 selection:text-white flex flex-col font-sans overflow-x-hidden">
+      {/* Interactive Constellation / Neural Plexus Web Cursor Animation */}
+      <PlexusCursorCanvas />
+
+      {/* Ambient Cursor Spotlight Glow */}
       <div
         ref={spotlightRef}
         className="pointer-events-none fixed top-0 left-0 w-[600px] h-[600px] rounded-full z-0 will-change-transform opacity-70"
         style={{
-          background: 'radial-gradient(circle, rgba(6, 182, 212, 0.08) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.09) 0%, transparent 70%)',
           transform: 'translate3d(-9999px, -9999px, 0)'
         }}
       />

@@ -86,13 +86,13 @@ export const LiveSyslogView: React.FC<LiveSyslogViewProps> = () => {
       return <span className="crt-phosphor font-mono">{line}</span>;
     }
 
-    let colorClass = 'text-slate-300';
+    let colorClass = 'text-zinc-300';
     if (line.includes('[ALERT]')) {
       colorClass = 'text-rose-400 font-semibold';
     } else if (line.includes('[WARN]')) {
       colorClass = 'text-amber-300';
     } else if (line.includes('[INFO]')) {
-      colorClass = 'text-cyan-300';
+      colorClass = 'text-violet-300';
     } else if (line.includes('[ERROR]')) {
       colorClass = 'text-rose-500 font-bold';
     }
@@ -107,7 +107,7 @@ export const LiveSyslogView: React.FC<LiveSyslogViewProps> = () => {
       {/* Control Bar */}
       <div className="bonanza-card p-4 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center space-x-3">
-          <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+          <div className="p-2.5 rounded-xl bg-indigo-500/10 text-violet-400 border border-indigo-500/20">
             <Terminal className="w-5 h-5" />
           </div>
           <div>
@@ -120,7 +120,7 @@ export const LiveSyslogView: React.FC<LiveSyslogViewProps> = () => {
                 <span>{wsConnected ? 'WS LIVE' : 'WS OFFLINE'}</span>
               </span>
             </h3>
-            <p className="text-xs text-slate-400 font-mono">Multi-threaded UDP / TCP RFC 5424 socket listener</p>
+            <p className="text-xs text-zinc-400 font-mono">Multi-threaded UDP / TCP RFC 5424 socket listener</p>
           </div>
         </div>
 
@@ -134,8 +134,8 @@ export const LiveSyslogView: React.FC<LiveSyslogViewProps> = () => {
             }}
             className={`px-3 py-2 rounded-xl text-xs font-mono flex items-center space-x-1.5 transition-all border ${
               crtMode
-                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/40 shadow-[0_0_15px_rgba(28,203,176,0.25)]'
-                : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
+                ? 'bg-indigo-600/25 text-violet-300 border-indigo-400/50 shadow-[0_0_15px_rgba(99,102,241,0.25)]'
+                : 'bg-white/5 border-white/10 text-zinc-400 hover:text-white'
             }`}
             title="Toggle Retro CRT Phosphor Scanlines"
           >
@@ -166,7 +166,7 @@ export const LiveSyslogView: React.FC<LiveSyslogViewProps> = () => {
 
           <button
             onClick={handleSimulateBurst}
-            className="px-4 py-2 rounded-xl text-xs font-semibold bg-gradient-to-r from-amber-500 to-rose-500 text-white shadow-rose-glow hover:opacity-90 transition-all flex items-center space-x-1.5 font-grotesk"
+            className="px-4 py-2 rounded-xl text-xs font-semibold bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 text-white shadow-glow-indigo hover:opacity-90 transition-all flex items-center space-x-1.5 font-grotesk"
           >
             <Flame className="w-3.5 h-3.5" />
             <span>Simulate Attack Burst</span>
@@ -177,7 +177,7 @@ export const LiveSyslogView: React.FC<LiveSyslogViewProps> = () => {
               setLogs([]);
               sound.playTick();
             }}
-            className="p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white border border-white/5 transition-all"
+            className="p-2 rounded-xl bg-zinc-900 text-zinc-400 hover:text-white border border-white/10 transition-all"
             title="Clear Console"
           >
             <Trash2 className="w-4 h-4" />
@@ -188,12 +188,12 @@ export const LiveSyslogView: React.FC<LiveSyslogViewProps> = () => {
       {/* Terminal Console (with CRT scanlines if enabled) */}
       <div className={`bonanza-card overflow-hidden border border-white/10 flex flex-col h-[580px] ${crtMode ? 'crt-screen' : ''}`}>
         {/* Terminal Header */}
-        <div className="bg-slate-950/90 px-4 py-2.5 border-b border-white/10 flex items-center justify-between">
+        <div className="bg-[#0E0D18] px-4 py-2.5 border-b border-white/10 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <span className="w-3 h-3 rounded-full bg-rose-500/80 inline-block" />
             <span className="w-3 h-3 rounded-full bg-amber-500/80 inline-block" />
             <span className="w-3 h-3 rounded-full bg-emerald-500/80 inline-block" />
-            <span className="text-xs font-mono text-slate-400 ml-2">syslog@netrashield-node-01: /var/log/syslog (port 5140)</span>
+            <span className="text-xs font-mono text-zinc-400 ml-2">syslog@netrashield-node-01: /var/log/syslog (port 5140)</span>
           </div>
 
           <div className="flex items-center space-x-3 text-xs">
@@ -202,14 +202,14 @@ export const LiveSyslogView: React.FC<LiveSyslogViewProps> = () => {
               placeholder="Filter syslog terminal..."
               value={filter}
               onChange={e => setFilter(e.target.value)}
-              className="bg-slate-900 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 font-mono w-48"
+              className="bg-[#141221] border border-white/10 rounded-lg px-2.5 py-1 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-400 font-mono w-48"
             />
-            <label className="flex items-center space-x-1.5 text-slate-400 cursor-pointer font-mono">
+            <label className="flex items-center space-x-1.5 text-zinc-400 cursor-pointer font-mono">
               <input
                 type="checkbox"
                 checked={autoScroll}
                 onChange={e => setAutoScroll(e.target.checked)}
-                className="rounded accent-cyan-400"
+                className="rounded accent-indigo-400"
               />
               <span>Auto-scroll</span>
             </label>
@@ -217,14 +217,14 @@ export const LiveSyslogView: React.FC<LiveSyslogViewProps> = () => {
         </div>
 
         {/* Terminal Body */}
-        <div className="flex-1 p-4 bg-slate-950/90 font-mono text-xs overflow-y-auto space-y-1 select-text">
+        <div className="flex-1 p-4 bg-[#08070F] font-mono text-xs overflow-y-auto space-y-1 select-text">
           {filteredLogs.length === 0 ? (
-            <div className="text-slate-600 text-center py-20 font-sans">
+            <div className="text-zinc-500 text-center py-20 font-sans">
               Syslog console listening for UDP packets on 127.0.0.1:5140. Trigger "Simulate Attack Burst" above to view live stream.
             </div>
           ) : (
             filteredLogs.map((log, idx) => (
-              <div key={idx} className="leading-relaxed hover:bg-slate-900/40 px-1 rounded transition-colors">
+              <div key={idx} className="leading-relaxed hover:bg-white/[0.04] px-1 rounded transition-colors">
                 {formatLogLine(log)}
               </div>
             ))
