@@ -5,8 +5,20 @@ import socket
 import threading
 import time
 import asyncio
+import re
 from typing import List, Set, Optional, Callable
 from .parser import ECSNormalizer
+
+ANSI_ESCAPE_RE = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+
+def sanitize_syslog_payload(text: str) -> str:
+    """
+    Strips ANSI escape sequences and non-printable control characters
+    to prevent terminal injection and log spoofing.
+    """
+    clean = ANSI_ESCAPE_RE.sub('', text)
+    clean = ''.join(c for c in clean if c.isprintable() or c in '\t ')
+    return clean[:4096]
 
 class SyslogServer:
     def __init__(self, host: str = "127.0.0.1", port: int = 5140):
@@ -66,16 +78,21 @@ class SyslogServer:
                     break
 
     def _handle_incoming_log(self, raw_msg: str, client_ip: str):
+        # Sanitize against terminal injection, ANSI escape codes, and oversized payloads
+        clean_msg = sanitize_syslog_payload(raw_msg).strip()
+        if not clean_msg:
+            return
+
         # Format with timestamp & severity tag
         now = time.strftime("%Y-%m-%d %H:%M:%S")
         tag = "[INFO]"
-        lower = raw_msg.lower()
+        lower = clean_msg.lower()
         if any(w in lower for w in ["failed", "unauthorized", "alert", "attack", "malware", "drop", "deny"]):
             tag = "[ALERT]"
         elif any(w in lower for w in ["warn", "invalid", "retry", "timeout"]):
             tag = "[WARN]"
 
-        formatted = f"{now} {tag} [{client_ip}] {raw_msg}"
+        formatted = f"{now} {tag} [{client_ip}] {clean_msg}"
         self.broadcast_line(formatted)
 
     def broadcast_line(self, line: str):

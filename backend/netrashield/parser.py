@@ -11,6 +11,13 @@ from collections import Counter
 from datetime import datetime, timezone
 from typing import Dict, List, Any, Optional
 
+ALLOWED_EXTENSIONS = {
+    ".json", ".ndjson", ".jsonl", ".csv", ".evtx", ".pcap", ".pcapng", ".log", ".txt", ".syslog"
+}
+MAX_FILE_SIZE = 25 * 1024 * 1024  # 25 MB per file
+MAX_BATCH_SIZE = 50 * 1024 * 1024  # 50 MB per batch
+MAX_EVENTS_PER_BATCH = 50000  # Cap events to prevent OOM DoS
+
 def calculate_shannon_entropy(data: str) -> float:
     """
     Computes Shannon entropy: H(X) = -sum(p_i * log2(p_i))
@@ -160,15 +167,39 @@ class ECSNormalizer:
 class TelemetryParser:
     """
     Parses various file types (.json, .csv, .log, .evtx, .pcap).
+    Hardened against XXE, malformed inputs, and OOM event flooding.
     """
     @staticmethod
     def parse_json(content: str) -> List[Dict[str, Any]]:
+        events = []
+        content = content.strip()
+        if not content:
+            return events
+
+        # Handle NDJSON / JSONL (newline-delimited JSON)
+        if "\n" in content and not content.startswith("["):
+            for line in content.splitlines():
+                if len(events) >= MAX_EVENTS_PER_BATCH:
+                    break
+                line = line.strip()
+                if line:
+                    try:
+                        item = json.loads(line)
+                        if isinstance(item, dict):
+                            events.append(ECSNormalizer.normalize_sysmon_dict(item))
+                    except Exception:
+                        continue
+            return events
+
+        # Standard JSON array or single object
         raw = json.loads(content)
         if isinstance(raw, dict):
             raw = [raw]
-        events = []
         for item in raw:
-            events.append(ECSNormalizer.normalize_sysmon_dict(item))
+            if len(events) >= MAX_EVENTS_PER_BATCH:
+                break
+            if isinstance(item, dict):
+                events.append(ECSNormalizer.normalize_sysmon_dict(item))
         return events
 
     @staticmethod
@@ -176,6 +207,8 @@ class TelemetryParser:
         reader = csv.DictReader(io.StringIO(content))
         events = []
         for row in reader:
+            if len(events) >= MAX_EVENTS_PER_BATCH:
+                break
             events.append(ECSNormalizer.normalize_sysmon_dict(row))
         return events
 
@@ -183,6 +216,8 @@ class TelemetryParser:
     def parse_syslog(content: str) -> List[Dict[str, Any]]:
         events = []
         for line in content.splitlines():
+            if len(events) >= MAX_EVENTS_PER_BATCH:
+                break
             line = line.strip()
             if line:
                 events.append(ECSNormalizer.normalize_syslog_line(line))
@@ -193,11 +228,24 @@ class TelemetryParser:
         events = []
         try:
             import Evtx.Evtx as evtx
-            import xml.etree.ElementTree as ET
+            try:
+                import defusedxml.ElementTree as ET
+            except ImportError:
+                import xml.etree.ElementTree as ET
+
             with evtx.Evtx(io.BytesIO(content_bytes)) as log:
                 for record in log.records():
+                    if len(events) >= MAX_EVENTS_PER_BATCH:
+                        break
                     xml_str = record.xml()
-                    root = ET.fromstring(xml_str)
+                    # XXE Injection Guard: reject XML containing external entity definitions
+                    if "<!ENTITY" in xml_str.upper() or "<!DOCTYPE" in xml_str.upper():
+                        continue
+                    try:
+                        root = ET.fromstring(xml_str)
+                    except Exception:
+                        continue
+
                     data = {}
                     for elem in root.iter():
                         tag = elem.tag.split("}")[-1]
@@ -224,6 +272,8 @@ class TelemetryParser:
             from scapy.layers.inet import IP, TCP, UDP
             packets = rdpcap(io.BytesIO(content_bytes))
             for pkt in packets:
+                if len(events) >= MAX_EVENTS_PER_BATCH:
+                    break
                 if IP in pkt:
                     src_ip = pkt[IP].src
                     dst_ip = pkt[IP].dst

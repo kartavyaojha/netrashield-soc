@@ -20,13 +20,28 @@ import csv
 import json
 import time
 import asyncio
-from typing import List, Optional, Dict, Any
+import tempfile
+import logging
+import ipaddress
+import re
+from typing import List, Optional, Dict, Any, Literal
+from pathlib import Path
 
-from fastapi import FastAPI, UploadFile, File, Form, WebSocket, WebSocketDisconnect, HTTPException, BackgroundTasks
+from fastapi import (
+    FastAPI,
+    UploadFile,
+    File,
+    Form,
+    WebSocket,
+    WebSocketDisconnect,
+    HTTPException,
+    BackgroundTasks,
+    Request
+)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response, FileResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 from netrashield.options import DetectionOptions
 from netrashield.database import DatabaseManager
@@ -34,11 +49,24 @@ from netrashield.parser import (
     TelemetryParser,
     ECSNormalizer,
     generate_synthetic_attack_telemetry,
-    calculate_shannon_entropy
+    calculate_shannon_entropy,
+    ALLOWED_EXTENSIONS,
+    MAX_FILE_SIZE,
+    MAX_BATCH_SIZE,
+    MAX_EVENTS_PER_BATCH
 )
 from netrashield.core_engine import CorrelationEngine
 from netrashield.syslog_server import SyslogServer
 from netrashield.soar import SoarEngine
+
+# Initialize Logger
+Path("logs").mkdir(exist_ok=True)
+logger = logging.getLogger("netrashield")
+if not logger.handlers:
+    fh = logging.FileHandler("logs/server.log", encoding="utf-8")
+    fh.setFormatter(logging.Formatter("[%(asctime)s] %(levelname)s: %(message)s"))
+    logger.addHandler(fh)
+    logger.setLevel(logging.INFO)
 
 app = FastAPI(
     title="NetraShield SOC 2.4.0 API",
@@ -46,14 +74,89 @@ app = FastAPI(
     version="2.4.0"
 )
 
-# CORS
+# Strict Explicit CORS Policy
+ALLOWED_ORIGINS = [
+    "http://127.0.0.1:5173",
+    "http://localhost:5173",
+    "http://127.0.0.1:7860",
+    "http://127.0.0.1:8000",
+    "http://localhost:8000"
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
+
+# HTTP Security Headers Middleware
+@app.middleware("http")
+async def security_headers_middleware(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline'; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data: blob:; "
+        "font-src 'self' data:; "
+        "connect-src 'self' ws://127.0.0.1:8000 ws://localhost:8000 http://127.0.0.1:8000 http://localhost:8000 ws://127.0.0.1:5173; "
+        "frame-ancestors 'none';"
+    )
+    return response
+
+# In-Memory Per-IP Rate Limiting Middleware
+class InMemoryRateLimiter:
+    def __init__(self):
+        self.history: Dict[str, List[float]] = {}
+        self.lock = asyncio.Lock()
+
+    async def check(self, client_ip: str, endpoint: str) -> bool:
+        limit = 120  # standard API endpoints: 120 req/min
+        if endpoint.startswith("/api/triage/run"):
+            limit = 15  # heavy correlation: max 15 req/min
+        elif endpoint.startswith("/api/ml/retrain"):
+            limit = 10  # ML retraining: max 10 req/min
+
+        now = time.time()
+        key = f"{client_ip}:{endpoint}"
+        async with self.lock:
+            timestamps = self.history.get(key, [])
+            timestamps = [t for t in timestamps if now - t < 60.0]
+            if len(timestamps) >= limit:
+                self.history[key] = timestamps
+                return False
+            timestamps.append(now)
+            self.history[key] = timestamps
+            return True
+
+rate_limiter = InMemoryRateLimiter()
+
+@app.middleware("http")
+async def rate_limiting_middleware(request: Request, call_next):
+    client_ip = request.client.host if request.client else "127.0.0.1"
+    path = request.url.path
+    if path.startswith("/api/"):
+        allowed = await rate_limiter.check(client_ip, path)
+        if not allowed:
+            return JSONResponse(
+                status_code=429,
+                content={"detail": "Too many requests. Please slow down."}
+            )
+    return await call_next(request)
+
+# Global Error Sanitization Exception Handler
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    if isinstance(exc, HTTPException):
+        return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+    logger.exception(f"Unhandled error on {request.method} {request.url.path}: {exc}")
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
 # App State
 options = DetectionOptions.load_from_yaml("config.yaml")
@@ -70,15 +173,35 @@ soar_engine = SoarEngine()
 syslog_server.start()
 
 # Models
+SHA256_REGEX = re.compile(r'^[a-fA-F0-9]{64}$')
+DOMAIN_REGEX = re.compile(r'^(?=.{1,253}$)(?!-)[A-Za-z0-9-]{1,63}(?<!-)(\.[A-Za-z0-9-]{1,63})+$')
+
 class StatusUpdate(BaseModel):
-    status: str
+    status: Literal["Open", "Investigating", "Escalated", "Resolved", "Closed"]
 
 class IOCItem(BaseModel):
     value: str
-    type: str  # sha256 | ips | domains
-    threat: str
+    type: Literal["sha256", "ips", "domains", "ip", "hash", "domain"]
+    threat: str = "Threat Indicator"
     severity: str = "HIGH"
     tags: List[str] = []
+
+    @model_validator(mode='after')
+    def validate_ioc_value(self):
+        val = self.value.strip()
+        t = self.type.lower()
+        if t in ("ips", "ip"):
+            try:
+                ipaddress.ip_address(val)
+            except ValueError:
+                raise ValueError(f"Invalid IP address format: {val}")
+        elif t in ("sha256", "hash"):
+            if not SHA256_REGEX.match(val):
+                raise ValueError("Invalid SHA256 hash: must be exactly 64 hexadecimal characters")
+        elif t in ("domains", "domain"):
+            if not DOMAIN_REGEX.match(val):
+                raise ValueError(f"Invalid domain hostname format: {val}")
+        return self
 
 class RetrainRequest(BaseModel):
     contamination: float = 0.05
@@ -134,31 +257,62 @@ async def run_triage(
     """
     Ingests uploaded files and/or synthetic attack telemetry,
     runs hybrid correlation, persists incidents, and returns triage metrics.
+    Hardened against path traversal, oversized payloads, and unsafe formats.
     """
+    total_batch_size = 0
     parsed_events: List[Dict[str, Any]] = []
 
-    # Parse uploaded files if present
+    # Parse uploaded files if present with strict validation & isolation
     if files:
-        for file in files:
-            content_bytes = await file.read()
-            filename = (file.filename or "").lower()
-            try:
-                if filename.endswith(".json"):
-                    parsed_events.extend(TelemetryParser.parse_json(content_bytes.decode("utf-8", errors="replace")))
-                elif filename.endswith(".csv"):
-                    parsed_events.extend(TelemetryParser.parse_csv(content_bytes.decode("utf-8", errors="replace")))
-                elif filename.endswith(".log") or filename.endswith(".syslog"):
-                    parsed_events.extend(TelemetryParser.parse_syslog(content_bytes.decode("utf-8", errors="replace")))
-                elif filename.endswith(".evtx"):
-                    parsed_events.extend(TelemetryParser.parse_evtx(content_bytes))
-                elif filename.endswith(".pcap") or filename.endswith(".cap"):
-                    parsed_events.extend(TelemetryParser.parse_pcap(content_bytes))
-                else:
-                    # Generic text line parsing fallback
-                    parsed_events.extend(TelemetryParser.parse_syslog(content_bytes.decode("utf-8", errors="replace")))
-            except Exception as e:
-                # Log or handle parsing failure gracefully
-                pass
+        with tempfile.TemporaryDirectory() as temp_dir:
+            for file in files:
+                # Sanitize filename & prevent path traversal
+                raw_filename = file.filename or ""
+                safe_name = Path(raw_filename).name
+                ext = Path(safe_name).suffix.lower()
+
+                # Strict extension allowlist
+                if not ext or ext not in ALLOWED_EXTENSIONS:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Disallowed file extension '{ext}'. Permitted: {', '.join(sorted(ALLOWED_EXTENSIONS))}"
+                    )
+
+                content_bytes = await file.read()
+                file_size = len(content_bytes)
+
+                # Strict file and batch size limits
+                if file_size > MAX_FILE_SIZE:
+                    raise HTTPException(
+                        status_code=413,
+                        detail=f"File '{safe_name}' exceeds maximum allowed size of 25MB."
+                    )
+                total_batch_size += file_size
+                if total_batch_size > MAX_BATCH_SIZE:
+                    raise HTTPException(
+                        status_code=413,
+                        detail="Total batch upload exceeds maximum allowed limit of 50MB."
+                    )
+
+                # Isolated disk write in temporary directory
+                temp_file = Path(temp_dir) / safe_name
+                temp_file.write_bytes(content_bytes)
+
+                try:
+                    if ext in [".json", ".ndjson", ".jsonl"]:
+                        parsed_events.extend(TelemetryParser.parse_json(content_bytes.decode("utf-8", errors="replace")))
+                    elif ext == ".csv":
+                        parsed_events.extend(TelemetryParser.parse_csv(content_bytes.decode("utf-8", errors="replace")))
+                    elif ext in [".log", ".txt", ".syslog"]:
+                        parsed_events.extend(TelemetryParser.parse_syslog(content_bytes.decode("utf-8", errors="replace")))
+                    elif ext == ".evtx":
+                        parsed_events.extend(TelemetryParser.parse_evtx(content_bytes))
+                    elif ext in [".pcap", ".pcapng", ".cap"]:
+                        parsed_events.extend(TelemetryParser.parse_pcap(content_bytes))
+                    else:
+                        parsed_events.extend(TelemetryParser.parse_syslog(content_bytes.decode("utf-8", errors="replace")))
+                except Exception as e:
+                    logger.warning(f"Failed parsing uploaded file {safe_name}: {e}")
 
     # If use_demo or no files uploaded, inject synthetic attack & normal events
     if use_demo or len(parsed_events) == 0:
@@ -189,10 +343,22 @@ async def run_triage(
     return results
 
 
+DDE_CHARS = ('=', '+', '-', '@', '\t', '\r')
+
+def sanitize_csv_cell(val: Any) -> Any:
+    """
+    Guards against CSV / Excel Formula Injection (DDE).
+    Prefixes cells starting with =, +, -, @, \\t, or \\r with a single quote.
+    """
+    if isinstance(val, str) and val.startswith(DDE_CHARS):
+        return "'" + val
+    return val
+
+
 @app.get("/api/triage/export/{format}")
 def export_triage(format: str):
     """
-    Exports latest triage incidents as CSV or JSON.
+    Exports latest triage incidents as CSV or JSON with DDE formula injection protection.
     """
     incidents = db.get_incidents(limit=1000)
     fmt = format.lower().strip()
@@ -207,7 +373,8 @@ def export_triage(format: str):
         writer = csv.DictWriter(output, fieldnames=fieldnames, extrasaction="ignore")
         writer.writeheader()
         for inc in incidents:
-            writer.writerow(inc)
+            sanitized_row = {k: sanitize_csv_cell(v) for k, v in inc.items()}
+            writer.writerow(sanitized_row)
         csv_data = output.getvalue()
         return Response(
             content=csv_data,
@@ -255,6 +422,12 @@ def add_ioc(item: IOCItem):
     Adds a new IOC indicator to watchlist, writes to intel/ioc_store.json, and hot-reloads engine.
     """
     t = item.type.lower().strip()
+    if t == "ip":
+        t = "ips"
+    elif t == "hash":
+        t = "sha256"
+    elif t == "domain":
+        t = "domains"
     if t not in ["sha256", "ips", "domains"]:
         raise HTTPException(status_code=400, detail="Type must be sha256, ips, or domains")
 
@@ -271,7 +444,7 @@ def add_ioc(item: IOCItem):
     engine.iocs[t] = [i for i in engine.iocs[t] if i["value"].lower() != item.value.lower().strip()]
     engine.iocs[t].append(new_entry)
     engine.save_iocs()
-    return {"success": True, "message": f"Added IOC {item.value} to {t}", "item": new_entry}
+    return {"status": "success", "success": True, "message": f"Added IOC {item.value} to {t}", "item": new_entry}
 
 
 @app.delete("/api/iocs")

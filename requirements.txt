@@ -8,4 +8,6 @@ numpy>=1.26.4
 PyYAML>=6.0.2
 scapy>=2.6.1
 python-evtx>=0.7.4
+defusedxml>=0.7.1
+httpx>=0.28.0
 pytest>=8.0.0

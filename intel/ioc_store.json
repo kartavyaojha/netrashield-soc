@@ -4,19 +4,28 @@
       "value": "275a021bbfb6489e54d471899f7db9d1663fc695ec2fe2a2c4538aabf651fd0f",
       "threat": "CobaltStrike Beacon Payload",
       "severity": "CRITICAL",
-      "tags": ["cobaltstrike", "loader", "c2"]
+      "tags": [
+        "cobaltstrike",
+        "loader",
+        "c2"
+      ]
     },
     {
       "value": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "threat": "Empty File Test Hash",
       "severity": "LOW",
-      "tags": ["test"]
+      "tags": [
+        "test"
+      ]
     },
     {
       "value": "cc749e6f3b064f7b243b679468903511eb9c9780a4f5f59fa0f4e1f7d5440265",
       "threat": "Mimikatz Dump Utility",
       "severity": "CRITICAL",
-      "tags": ["mimikatz", "credential_dump"]
+      "tags": [
+        "mimikatz",
+        "credential_dump"
+      ]
     }
   ],
   "ips": [
@@ -24,19 +33,38 @@
       "value": "185.220.101.42",
       "threat": "Tor Exit Node / DarkHydrus C2 Endpoint",
       "severity": "CRITICAL",
-      "tags": ["c2", "tor", "darkhydrus"]
+      "tags": [
+        "c2",
+        "tor",
+        "darkhydrus"
+      ]
     },
     {
       "value": "91.240.118.172",
       "threat": "Qakbot Command & Control Node",
       "severity": "HIGH",
-      "tags": ["c2", "botnet"]
+      "tags": [
+        "c2",
+        "botnet"
+      ]
     },
     {
       "value": "45.154.255.89",
       "threat": "Brute-force Scanner IP",
       "severity": "HIGH",
-      "tags": ["scanner", "bruteforce"]
+      "tags": [
+        "scanner",
+        "bruteforce"
+      ]
+    },
+    {
+      "value": "198.51.100.45",
+      "threat": "Known Cobalt Strike C2",
+      "severity": "HIGH",
+      "tags": [
+        "c2",
+        "apt"
+      ]
     }
   ],
   "domains": [
@@ -44,19 +72,28 @@
       "value": "c2-sync-agent.online",
       "threat": "Active C2 Dynamic DNS Domain",
       "severity": "CRITICAL",
-      "tags": ["c2", "dga"]
+      "tags": [
+        "c2",
+        "dga"
+      ]
     },
     {
       "value": "update-service-win32.com",
       "threat": "Malicious Typosquatted Exfiltration Drop",
       "severity": "CRITICAL",
-      "tags": ["exfiltration", "phishing"]
+      "tags": [
+        "exfiltration",
+        "phishing"
+      ]
     },
     {
       "value": "telemetry-check-net.info",
       "threat": "Stager Download Site",
       "severity": "HIGH",
-      "tags": ["stager", "malware"]
+      "tags": [
+        "stager",
+        "malware"
+      ]
     }
   ]
 }
