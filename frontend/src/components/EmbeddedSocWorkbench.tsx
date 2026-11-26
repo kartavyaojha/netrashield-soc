@@ -16,9 +16,11 @@ import {
   Cpu,
   ShieldCheck,
   ChevronRight,
-  ExternalLink
+  ExternalLink,
+  FileCode
 } from 'lucide-react';
 import { ThreatTriageView } from './ThreatTriageView';
+import { SigmaStudioView } from './SigmaStudioView';
 import { SoarPlaybookView } from './SoarPlaybookView';
 import { LiveSyslogView } from './LiveSyslogView';
 import { IocManagerView } from './IocManagerView';
@@ -44,10 +46,11 @@ export const EmbeddedSocWorkbench: React.FC<EmbeddedSocWorkbenchProps> = ({
   isFullScreen = false,
   onToggleFullScreen
 }) => {
-  const [activeTab, setActiveTab] = useState<'triage' | 'soar' | 'syslog' | 'ioc' | 'mitre' | 'settings'>('triage');
+  const [activeTab, setActiveTab] = useState<'triage' | 'sigma' | 'soar' | 'syslog' | 'ioc' | 'mitre' | 'settings'>('triage');
 
   const tabs = [
     { id: 'triage' as const, label: 'Threat Triage', icon: ShieldAlert },
+    { id: 'sigma' as const, label: 'Sigma Studio', icon: FileCode },
     { id: 'soar' as const, label: 'Autonomous SOAR', icon: Zap },
     { id: 'syslog' as const, label: 'Live Syslog (Port 5140)', icon: Terminal },
     { id: 'ioc' as const, label: 'IOC Watchlist', icon: Database },
@@ -112,6 +115,7 @@ export const EmbeddedSocWorkbench: React.FC<EmbeddedSocWorkbenchProps> = ({
             onUpdateStatus={onUpdateStatus}
           />
         )}
+        {activeTab === 'sigma' && <SigmaStudioView />}
         {activeTab === 'soar' && <SoarPlaybookView />}
         {activeTab === 'syslog' && <LiveSyslogView />}
         {activeTab === 'ioc' && <IocManagerView />}

@@ -6,7 +6,7 @@ import sqlite3
 import json
 from pathlib import Path
 from typing import Dict, List, Optional, Any
-from datetime import datetime
+from datetime import datetime, timezone
 
 DEFAULT_DB_PATH = "data/netrashield.db"
 
@@ -96,6 +96,20 @@ class DatabaseManager:
                     latency_ms REAL NOT NULL
                 )
             """)
+
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS audit_logs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    audit_id TEXT UNIQUE NOT NULL,
+                    incident_id TEXT NOT NULL,
+                    action_type TEXT NOT NULL,
+                    target_entity TEXT NOT NULL,
+                    analyst_note TEXT,
+                    previous_status TEXT,
+                    new_status TEXT,
+                    executed_at TEXT NOT NULL
+                )
+            """)
             conn.commit()
 
     def save_incidents(self, incidents: List[Dict[str, Any]]) -> None:
@@ -143,6 +157,67 @@ class DatabaseManager:
             """, (new_status, alert_id))
             conn.commit()
             return cursor.rowcount > 0
+
+    def get_incident_by_id(self, alert_id: str) -> Optional[Dict[str, Any]]:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM alert_incidents WHERE alert_id = ?", (alert_id,))
+            row = cursor.fetchone()
+            if not row:
+                return None
+            item = dict(row)
+            try:
+                item["raw_ecs"] = json.loads(item["raw_ecs"]) if item["raw_ecs"] else {}
+            except Exception:
+                pass
+            try:
+                item["rule_ids"] = json.loads(item["rule_ids"]) if item["rule_ids"] else []
+            except Exception:
+                pass
+            return item
+
+    def insert_audit_log(
+        self,
+        audit_id: str,
+        incident_id: str,
+        action_type: str,
+        target_entity: str,
+        analyst_note: str,
+        previous_status: str,
+        new_status: str,
+        executed_at: Optional[str] = None
+    ) -> None:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO audit_logs (
+                    audit_id, incident_id, action_type, target_entity,
+                    analyst_note, previous_status, new_status, executed_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                audit_id,
+                incident_id,
+                action_type,
+                target_entity,
+                analyst_note or "",
+                previous_status or "Open",
+                new_status or "Contained",
+                executed_at or datetime.now(timezone.utc).isoformat()
+            ))
+            conn.commit()
+
+    def get_audit_logs(self, incident_id: Optional[str] = None, limit: int = 100) -> List[Dict[str, Any]]:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            if incident_id:
+                cursor.execute("""
+                    SELECT * FROM audit_logs WHERE incident_id = ? ORDER BY id DESC LIMIT ?
+                """, (incident_id, limit))
+            else:
+                cursor.execute("""
+                    SELECT * FROM audit_logs ORDER BY id DESC LIMIT ?
+                """, (limit,))
+            return [dict(row) for row in cursor.fetchall()]
 
     def get_incidents(self, limit: int = 500) -> List[Dict[str, Any]]:
         with self.get_connection() as conn:

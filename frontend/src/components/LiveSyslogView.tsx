@@ -19,7 +19,7 @@ export const LiveSyslogView: React.FC<LiveSyslogViewProps> = () => {
   // Connect WebSocket
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    const host = window.location.port === '5173'
       ? `${window.location.hostname}:8000`
       : window.location.host;
     const wsUrl = `${protocol}//${host}/ws/syslog`;

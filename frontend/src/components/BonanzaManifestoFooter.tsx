@@ -85,10 +85,10 @@ export const BonanzaManifestoFooter: React.FC = () => {
 
         <div className="pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between text-[11px] text-zinc-500 font-mono gap-4">
           <div>
-            <span>© {new Date().getFullYear()} Kartavya's NetraShield SOC. All rights reserved.</span>
+            <span>© {new Date().getFullYear()} NetraShield SOC. Open Source Blue Team Workbench.</span>
           </div>
           <div className="flex items-center space-x-1">
-            <span>Engineered by Kartavya Ojha</span>
+            <span>Maintained by Kartavya Ojha · MIT License</span>
           </div>
         </div>
       </div>

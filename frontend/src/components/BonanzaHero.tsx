@@ -24,7 +24,7 @@ export const BonanzaHero: React.FC<BonanzaHeroProps> = ({
         <span className="w-2 h-2 rounded-full bg-[#FF4D2D]" />
         <span className="font-mono text-zinc-200 font-semibold">NetraShield SOC 2.4.0</span>
         <span className="text-zinc-600">•</span>
-        <span>Kartavya's Threat Correlation Workbench</span>
+        <span>Autonomous Blue-Team Defense Workbench</span>
       </motion.div>
 
       <motion.h1

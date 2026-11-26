@@ -1,6 +1,6 @@
 export type SeverityLevel = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
 
-export type IncidentStatus = 'Open' | 'Investigating' | 'Escalated' | 'Closed';
+export type IncidentStatus = 'Open' | 'Investigating' | 'Escalated' | 'Contained' | 'Resolved' | 'Closed';
 
 export interface AlertIncident {
   alert_id: string;

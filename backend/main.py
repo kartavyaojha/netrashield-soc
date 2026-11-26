@@ -24,6 +24,7 @@ import tempfile
 import logging
 import ipaddress
 import re
+import yaml
 from typing import List, Optional, Dict, Any, Literal
 
 from fastapi import (
@@ -57,6 +58,8 @@ from netrashield.parser import (
 from netrashield.core_engine import CorrelationEngine
 from netrashield.syslog_server import SyslogServer
 from netrashield.soar import SoarEngine
+from netrashield.playbook import generate_verdict_and_remediation, execute_containment_action
+from netrashield.report_pdf import generate_executive_pdf_report
 
 Path("logs").mkdir(exist_ok=True)
 logger = logging.getLogger("netrashield")
@@ -68,7 +71,7 @@ if not logger.handlers:
 
 app = FastAPI(
     title="NetraShield SOC 2.4.0 API",
-    description="Kartavya's Blue-Team Cyber Defense & Threat Correlation Engine",
+    description="Open-Source Blue-Team Cyber Defense & Threat Correlation Engine",
     version="2.4.0"
 )
 
@@ -175,7 +178,17 @@ SHA256_REGEX = re.compile(r'^[a-fA-F0-9]{64}$')
 DOMAIN_REGEX = re.compile(r'^(?=.{1,253}$)(?!-)[A-Za-z0-9-]{1,63}(?<!-)(\.[A-Za-z0-9-]{1,63})+$')
 
 class StatusUpdate(BaseModel):
-    status: Literal["Open", "Investigating", "Escalated", "Resolved", "Closed"]
+    status: Literal["Open", "Investigating", "Escalated", "Contained", "Resolved", "Closed"]
+
+class ContainmentRequest(BaseModel):
+    action_type: Literal["ISOLATE_HOST", "BLOCK_DEST_IP", "DISABLE_USER_ACCOUNT"]
+    target_entity: str
+    analyst_note: str = ""
+    confirmed: bool = False
+
+class RulePayload(BaseModel):
+    rule_id: str
+    yaml_content: str
 
 class IOCItem(BaseModel):
     value: str
@@ -351,12 +364,20 @@ def sanitize_csv_cell(val: Any) -> Any:
 @app.get("/api/triage/export/{format}")
 def export_triage(format: str):
     """
-    Exports latest triage incidents as CSV or JSON with DDE formula injection protection.
+    Exports latest triage incidents as CSV, JSON, or PDF with DDE formula injection protection.
     """
     incidents = db.get_incidents(limit=1000)
     fmt = format.lower().strip()
 
-    if fmt == "csv":
+    if fmt == "pdf":
+        audit_logs = db.get_audit_logs(limit=50)
+        pdf_bytes = generate_executive_pdf_report(incidents, audit_logs)
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={"Content-Disposition": "attachment; filename=netrashield_executive_report.pdf"}
+        )
+    elif fmt == "csv":
         output = io.StringIO()
         fieldnames = [
             "alert_id", "timestamp", "host", "severity", "risk_score",
@@ -385,12 +406,159 @@ def export_triage(format: str):
 @app.patch("/api/incidents/{alert_id}")
 def update_incident_status(alert_id: str, payload: StatusUpdate):
     """
-    Updates incident investigation status (Open -> Investigating -> Escalated -> Closed).
+    Updates incident investigation status (Open -> Investigating -> Escalated -> Contained -> Resolved -> Closed).
     """
     success = db.update_incident_status(alert_id, payload.status)
     if not success:
         raise HTTPException(status_code=404, detail="Incident not found")
     return {"success": True, "alert_id": alert_id, "new_status": payload.status}
+
+
+# ==================== Human-in-the-Loop Playbook & Audit API ====================
+
+@app.get("/api/incidents/{alert_id}/verdict")
+def get_incident_verdict(alert_id: str):
+    """
+    Generates plain-English investigation verdict and MITRE-tailored remediation checklist.
+    """
+    incident = db.get_incident_by_id(alert_id)
+    if not incident:
+        raise HTTPException(status_code=404, detail="Incident not found")
+    verdict_data = generate_verdict_and_remediation(incident)
+    return verdict_data
+
+
+@app.post("/api/incidents/{alert_id}/contain")
+def trigger_containment(alert_id: str, payload: ContainmentRequest):
+    """
+    Executes governed analyst containment action (ISOLATE_HOST, BLOCK_DEST_IP, DISABLE_USER_ACCOUNT).
+    Requires explicit confirmed: true flag from analyst.
+    """
+    if not payload.confirmed:
+        raise HTTPException(status_code=400, detail="Containment action must be explicitly confirmed by analyst.")
+    try:
+        result = execute_containment_action(
+            db=db,
+            alert_id=alert_id,
+            action_type=payload.action_type,
+            target_entity=payload.target_entity,
+            analyst_note=payload.analyst_note
+        )
+        return {"success": True, **result}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/api/incidents/{alert_id}/audit")
+def get_incident_audit(alert_id: str):
+    """
+    Returns audit trail entries specific to a given incident.
+    """
+    logs = db.get_audit_logs(incident_id=alert_id)
+    return {"audit_logs": logs}
+
+
+@app.get("/api/audit")
+def get_all_audit_logs():
+    """
+    Returns full containment and remediation audit ledger.
+    """
+    logs = db.get_audit_logs(limit=100)
+    return {"audit_logs": logs}
+
+
+# ==================== In-Browser Sigma Rule Studio API ====================
+
+@app.get("/api/rules")
+def list_sigma_rules():
+    """
+    Enumerates all active Sigma detection rules from rules/sigma/.
+    """
+    rules_dir = Path("rules/sigma")
+    rules_list = []
+    if rules_dir.exists():
+        for file_path in sorted(rules_dir.glob("*.y*ml")):
+            try:
+                with open(file_path, "r", encoding="utf-8") as f:
+                    content = f.read()
+                    data = yaml.safe_load(content)
+                    if isinstance(data, dict):
+                        rules_list.append({
+                            "id": str(data.get("id", file_path.stem)),
+                            "title": data.get("title", file_path.stem),
+                            "level": data.get("level", "medium"),
+                            "description": data.get("description", ""),
+                            "tags": data.get("tags", []),
+                            "raw_yaml": content,
+                            "file_name": file_path.name
+                        })
+            except Exception as e:
+                logger.warning(f"Failed parsing rule file {file_path}: {e}")
+    return {"rules": rules_list, "total": len(rules_list)}
+
+
+@app.post("/api/rules")
+def save_sigma_rule(payload: RulePayload):
+    """
+    Validates, saves, and hot-reloads a Sigma rule in rules/sigma/.
+    """
+    try:
+        parsed = yaml.safe_load(payload.yaml_content)
+        if not isinstance(parsed, dict):
+            raise HTTPException(status_code=400, detail="YAML must parse into a mapping/dictionary")
+        if "title" not in parsed:
+            raise HTTPException(status_code=400, detail="Sigma rule must contain a 'title' field")
+        if "detection" not in parsed:
+            raise HTTPException(status_code=400, detail="Sigma rule must contain a 'detection' field")
+    except yaml.YAMLError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid YAML syntax: {str(e)}")
+
+    safe_id = re.sub(r'[^a-zA-Z0-9_\-\.]', '', payload.rule_id.strip())
+    if not safe_id:
+        safe_id = f"custom_rule_{int(time.time())}"
+    if not (safe_id.endswith(".yml") or safe_id.endswith(".yaml")):
+        safe_id = f"{safe_id}.yml"
+
+    rules_dir = Path("rules/sigma")
+    rules_dir.mkdir(parents=True, exist_ok=True)
+    target_path = rules_dir / safe_id
+    with open(target_path, "w", encoding="utf-8") as f:
+        f.write(payload.yaml_content)
+
+    # Hot-reload rules into the correlation engine
+    engine.load_sigma_rules()
+    return {
+        "success": True,
+        "rule_id": safe_id,
+        "rules_count": len(engine.sigma_rules)
+    }
+
+
+@app.delete("/api/rules/{rule_id}")
+def delete_sigma_rule(rule_id: str):
+    """
+    Deletes a Sigma rule file and hot-reloads the engine.
+    """
+    safe_id = re.sub(r'[^a-zA-Z0-9_\-\.]', '', rule_id.strip())
+    if not (safe_id.endswith(".yml") or safe_id.endswith(".yaml")):
+        file_candidates = [f"{safe_id}.yml", f"{safe_id}.yaml"]
+    else:
+        file_candidates = [safe_id]
+
+    deleted = False
+    rules_dir = Path("rules/sigma")
+    for fname in file_candidates:
+        fpath = rules_dir / fname
+        if fpath.exists():
+            fpath.unlink()
+            deleted = True
+            break
+
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Sigma rule file not found")
+
+    engine.load_sigma_rules()
+    return {"success": True, "deleted": safe_id, "rules_count": len(engine.sigma_rules)}
 
 
 @app.get("/api/iocs")
@@ -614,4 +782,14 @@ def rollback_soar_action(payload: SoarRollbackRequest):
 # Serve static built frontend if exists
 frontend_dist = Path(__file__).parent.parent / "frontend" / "dist"
 if frontend_dist.exists() and (frontend_dist / "index.html").exists():
-    app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="static_frontend")
+    if (frontend_dist / "assets").exists():
+        app.mount("/assets", StaticFiles(directory=str(frontend_dist / "assets")), name="static_assets")
+
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        if full_path.startswith("api/") or full_path.startswith("ws/"):
+            raise HTTPException(status_code=404, detail="Endpoint not found")
+        file_path = frontend_dist / full_path
+        if file_path.is_file():
+            return FileResponse(file_path)
+        return FileResponse(frontend_dist / "index.html")

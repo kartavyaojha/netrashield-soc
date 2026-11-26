@@ -40,6 +40,9 @@ class CorrelationEngine:
             n_estimators=self.options.n_estimators
         )
 
+    def load_sigma_rules(self) -> None:
+        self.load_rules()
+
     def load_rules(self) -> None:
         self.sigma_rules.clear()
         p = Path(self.rules_dir)
