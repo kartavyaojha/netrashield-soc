@@ -25,7 +25,6 @@ import logging
 import ipaddress
 import re
 from typing import List, Optional, Dict, Any, Literal
-from pathlib import Path
 
 from fastapi import (
     FastAPI,
@@ -59,7 +58,6 @@ from netrashield.core_engine import CorrelationEngine
 from netrashield.syslog_server import SyslogServer
 from netrashield.soar import SoarEngine
 
-# Initialize Logger
 Path("logs").mkdir(exist_ok=True)
 logger = logging.getLogger("netrashield")
 if not logger.handlers:
@@ -226,7 +224,6 @@ class SoarRollbackRequest(BaseModel):
     action_id: str
 
 
-# Endpoints
 @app.get("/api/health")
 def get_health():
     """
@@ -314,19 +311,15 @@ async def run_triage(
                 except Exception as e:
                     logger.warning(f"Failed parsing uploaded file {safe_name}: {e}")
 
-    # If use_demo or no files uploaded, inject synthetic attack & normal events
     if use_demo or len(parsed_events) == 0:
         demo_events = generate_synthetic_attack_telemetry(count=30)
         parsed_events.extend(demo_events)
 
-    # Process batch through correlation engine
     results = engine.process_batch(parsed_events, min_risk_threshold=min_risk_threshold)
 
-    # Persist alerts to SQLite
     if results["alerts"]:
         db.save_incidents(results["alerts"])
 
-    # Persist report summary
     kpis = results["kpis"]
     db.save_triage_report({
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ"),

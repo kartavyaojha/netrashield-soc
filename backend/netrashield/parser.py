@@ -383,11 +383,9 @@ def generate_synthetic_attack_telemetry(count: int = 25) -> List[Dict[str, Any]]
     ]
 
     all_events = []
-    # Add attack events
     for raw in attacks:
         all_events.append(ECSNormalizer.normalize_sysmon_dict(raw))
 
-    # Add normal events
     while len(all_events) < count:
         idx = (len(all_events) - len(attacks)) % len(normal_events)
         norm_item = dict(normal_events[idx])

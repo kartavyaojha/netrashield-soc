@@ -197,47 +197,47 @@ export const SoarPlaybookView: React.FC = () => {
     <div className="space-y-6">
       {/* Top Banner KPI Summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bonanza-card p-4 rounded-xl border border-indigo-500/20 bg-[#12111B]">
-          <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
+        <div className="bonanza-card p-4 rounded-xl border border-white/10 bg-[#12111B]">
+          <div className="flex items-center justify-between text-xs text-zinc-400 mb-1">
             <span>Active Quarantines</span>
             <Lock className="w-4 h-4 text-rose-400" />
           </div>
-          <div className="text-2xl font-bold font-grotesk text-white">
+          <div className="text-2xl font-bold font-grotesk tabular-nums text-white">
             {history.filter(h => h.status === 'SUCCESS').length} Rules
           </div>
-          <div className="text-[11px] text-emerald-400 mt-1 flex items-center gap-1">
+          <div className="text-[11px] text-emerald-400 mt-1 flex items-center gap-1 font-mono">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
             Enforcing at Edge
           </div>
         </div>
 
-        <div className="bonanza-card p-4 rounded-xl border border-indigo-500/20 bg-[#12111B]">
-          <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
+        <div className="bonanza-card p-4 rounded-xl border border-white/10 bg-[#12111B]">
+          <div className="flex items-center justify-between text-xs text-zinc-400 mb-1">
             <span>Mean Time To Contain (MTTC)</span>
-            <Clock className="w-4 h-4 text-indigo-400" />
+            <Clock className="w-4 h-4 text-zinc-300" />
           </div>
-          <div className="text-2xl font-bold font-grotesk text-indigo-300">
+          <div className="text-2xl font-bold font-grotesk tabular-nums text-zinc-200">
             118 ms
           </div>
-          <div className="text-[11px] text-slate-400 mt-1">Autonomous Sub-Second Speed</div>
+          <div className="text-[11px] text-zinc-400 mt-1 font-mono">Verified Sub-Second Execution</div>
         </div>
 
-        <div className="bonanza-card p-4 rounded-xl border border-indigo-500/20 bg-[#12111B]">
-          <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
+        <div className="bonanza-card p-4 rounded-xl border border-white/10 bg-[#12111B]">
+          <div className="flex items-center justify-between text-xs text-zinc-400 mb-1">
             <span>Playbook Engine Status</span>
             <Zap className="w-4 h-4 text-amber-400" />
           </div>
-          <div className="text-2xl font-bold font-grotesk text-white">ACTIVE</div>
-          <div className="text-[11px] text-indigo-400 mt-1">5 Playbooks Armed</div>
+          <div className="text-2xl font-bold font-grotesk text-white">ONLINE</div>
+          <div className="text-[11px] text-zinc-400 mt-1 font-mono">5 Playbooks Loaded</div>
         </div>
 
-        <div className="bonanza-card p-4 rounded-xl border border-indigo-500/20 bg-[#12111B]">
-          <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
+        <div className="bonanza-card p-4 rounded-xl border border-white/10 bg-[#12111B]">
+          <div className="flex items-center justify-between text-xs text-zinc-400 mb-1">
             <span>Audit Ledger Integrity</span>
             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           </div>
-          <div className="text-2xl font-bold font-grotesk text-emerald-400">100%</div>
-          <div className="text-[11px] text-slate-400 mt-1">Cryptographically Signed</div>
+          <div className="text-2xl font-bold font-grotesk tabular-nums text-emerald-400">100%</div>
+          <div className="text-[11px] text-zinc-400 mt-1 font-mono">Cryptographically Audited</div>
         </div>
       </div>
 

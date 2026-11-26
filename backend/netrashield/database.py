@@ -24,8 +24,6 @@ class DatabaseManager:
     def init_db(self):
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            
-            # TelemetrySource
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS telemetry_sources (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -37,7 +35,6 @@ class DatabaseManager:
                 )
             """)
 
-            # RuleRepository
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS rule_repository (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -52,7 +49,6 @@ class DatabaseManager:
                 )
             """)
 
-            # DetectionPolicy
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS detection_policies (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -64,7 +60,6 @@ class DatabaseManager:
                 )
             """)
 
-            # AlertIncident
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS alert_incidents (
                     alert_id TEXT PRIMARY KEY,
@@ -87,7 +82,6 @@ class DatabaseManager:
                 )
             """)
 
-            # TriageReport
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS triage_reports (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,

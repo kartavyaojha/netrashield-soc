@@ -1,92 +1,57 @@
-# NetraShield SOC 2.4.0 🛡️
-> **Kartavya's Blue-Team Cyber Defense & Threat Correlation Engine**
-> *FastAPI REST/WebSocket Backend + Bonanza Studios Dark Editorial Design System (React + Vite + Tailwind CSS + Recharts + Framer Motion)*
+# Kartavya's NetraShield SOC 2.4.0
 
-[![Python 3.14](https://img.shields.io/badge/python-3.14-blue.svg)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.165-009688.svg)](https://fastapi.tiangolo.com/)
-[![React](https://img.shields.io/badge/React-19-61DAFB.svg)](https://react.dev/)
-[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.4-38B2AC.svg)](https://tailwindcss.com/)
-[![MITRE ATT&CK](https://img.shields.io/badge/MITRE-Enterprise-red.svg)](https://attack.mitre.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+NetraShield SOC is a local-first security operations workbench engineered for high-throughput cyber defense and threat triage. It normalizes multi-format telemetry into Elastic Common Schema (ECS), calculates real-time Shannon entropy, and fuses deterministic SigmaHQ detection rules with unsupervised Isolation Forest anomaly scoring. The entire engine executes inside an offline perimeter enclave, ensuring zero cloud telemetry leakage while evaluating 10,000 events in under 0.35 seconds.
 
 ---
 
-## ⚡ Overview
+## Architecture Overview
 
-**NetraShield SOC 2.4.0** is an enterprise-grade, local security operations workbench designed to evaluate, normalize, and correlate large volumes of multi-vendor telemetry under 3 seconds with zero cloud data leakage.
+NetraShield decouples high-speed log ingestion from real-time analytics and presentation:
 
-### Key Capabilities
-- **Hybrid Risk Fusion:** Fuses deterministic **SigmaHQ YAML rules** (`NS-SIG-1001` through `1004`), unsupervised **Isolation Forest anomaly detection**, and an **offline Threat Intelligence watchlist** (SHA256, IPv4, C2 Domains) into a unified 0–100 risk score.
-- **ECS Normalizer & Shannon Entropy:** Converts Windows Sysmon (EID 1/3), Linux Syslog, PCAP packets, and EVTX files into standardized Elastic Common Schema (ECS) fields with realtime Shannon entropy computation ($H(X) = -\sum p_i \log_2 p_i$).
-- **Sub-3s Throughput Benchmark:** Vectorized NumPy & Scikit-Learn inference evaluates **10,000 events in ~0.33 seconds** in memory.
-- **Two-Mode User Interface:**
-  1. **Bonanza Studios Editorial Showcase:** Tight-tracked grotesque typography (`Space Grotesk`), obsidian dot matrix canvas, dual-layer vertical text-roll CTAs, and an embedded interactive application frame (`netrashield.local/triage`).
-  2. **Full-Screen Distraction-Free Workbench:** One-click full-screen cyber defense console with 5 interactive views.
+- **FastAPI Core Engine (`backend/`):** Asynchronous ASGI server providing REST endpoints, WebSocket event streaming, in-memory rate limiting, and HTTP security headers middleware.
+- **ECS Parser & Shannon Math (`backend/netrashield/parser.py`):** Multi-format parser ingesting Windows Sysmon (EVTX/JSON), Linux Syslog (RFC-5424), Raw PCAP, and CSV records. Computes byte-level Shannon entropy ($H(X) = -\sum p_i \log_2 p_i$) to isolate Base64 and high-entropy download cradles.
+- **Hybrid Correlation (`backend/netrashield/core_engine.py`):** Fuses deterministic Sigma YAML conditions (`rules/sigma/`) with a Scikit-Learn Isolation Forest ensemble (`[cmd_len, entropy, depth, port]`) and local IOC watchlists (`intel/ioc_store.json`) into a normalized 0–100 risk score.
+- **Autonomous SOAR Subsystem (`backend/netrashield/soar.py`):** Five containment playbooks executing atomic IP quarantine, host loopback isolation, process termination, IAM session revocation, and DNS sinkholing with full rollback audit logging.
+- **Editorial React Workbench (`frontend/`):** Vite, TypeScript, and Tailwind CSS client inspired by the Bonanza Studios Swiss-editorial design system. Features dual-mode display (Showcase vs. Full-Screen SOC Console), SVG attack graph visualizer, raw hex dump dossier, and Web Audio haptic feedback.
 
 ---
 
-## 🏗️ Architecture
+## Local Setup & Quick Start
 
-```text
-netrashield-soc/
-├── config.yaml                     # Unified server & detection policy configuration
-├── requirements.txt                # Python backend dependencies
-├── backend/
-│   ├── main.py                     # FastAPI REST API, WebSocket server & static frontend mount
-│   └── netrashield/
-│       ├── core_engine.py          # Vectorized Isolation Forest ML + Sigma YAML + IOC hybrid fusion
-│       ├── database.py             # SQLite persistence (TelemetrySource, AlertIncident, TriageReport)
-│       ├── parser.py               # Multi-format telemetry parser + ECS normalizer + Shannon entropy
-│       ├── options.py              # DetectionOptions dataclass & config.yaml sync
-│       ├── mitre.py                # MITRE ATT&CK taxonomy catalog & technique mapper
-│       └── syslog_server.py        # Multi-threaded UDP/TCP Syslog listener (Port 5140) + broadcaster
-├── frontend/                       # Bonanza-Style React + Vite + Tailwind App
-│   ├── src/
-│   │   ├── components/             # Showcase & SOC Workbench Views
-│   │   │   ├── ThreatTriageView.tsx
-│   │   │   ├── LiveSyslogView.tsx
-│   │   │   ├── IocManagerView.tsx
-│   │   │   ├── MitreMatrixView.tsx
-│   │   │   ├── SettingsView.tsx
-│   │   │   └── EmbeddedSocWorkbench.tsx
-│   │   ├── App.tsx                 # Two-Mode Experience Switcher
-│   │   └── types/soc.ts            # TypeScript interfaces
-├── rules/sigma/                    # Auto-seeded Sigma rules (NS-SIG-1001..1004)
-├── intel/ioc_store.json            # Offline Threat Intelligence store (SHA256, IPv4, Domains)
-└── tests/
-    ├── test_netrashield.py         # 5 automated unittests
-    └── verify_live_system.py       # End-to-end integration verification suite
-```
+### Prerequisites
+- Python 3.10+ (tested on Python 3.14)
+- Node.js 18+ and npm
 
----
-
-## 🚀 Quick Start
-
-### 1. Clone & Set Up Backend
+### 1. Backend Setup
 ```bash
-git clone https://github.com/kartavyaojha/netrashield-soc.git
-cd netrashield-soc
-
-# Create virtual environment & install requirements
+# From repository root:
 python -m venv .venv
-source .venv/bin/activate  # On Windows: .\.venv\Scripts\Activate.ps1
+
+# On Linux/macOS:
+source .venv/bin/activate
+# On Windows (PowerShell):
+.\.venv\Scripts\Activate.ps1
+
 pip install -r requirements.txt
 ```
 
-### 2. Set Up Frontend
+### 2. Frontend Setup
 ```bash
 cd frontend
 npm install
-npm run build   # Or run npm run dev for live hot-reloading
+npm run build    # Produces production bundle in frontend/dist/
 cd ..
 ```
 
-### 3. Run Backend & Frontend
+### 3. Run the Development Environment
+
+Start the backend and frontend in separate terminal sessions:
+
 ```bash
-# Terminal 1: Start FastAPI REST & WebSocket Server (Port 8000 & Syslog Socket 5140)
+# Terminal 1: Backend API & UDP/TCP Syslog listener (port 5140)
 uvicorn backend.main:app --host 127.0.0.1 --port 8000
 
-# Terminal 2: Start Vite Dev Server (Port 5173)
+# Terminal 2: Frontend Vite dev server
 cd frontend
 npm run dev -- --host 127.0.0.1 --port 5173
 ```
@@ -95,22 +60,46 @@ Open [http://127.0.0.1:5173](http://127.0.0.1:5173) in your browser.
 
 ---
 
-## 🧪 Testing & Verification
+## Security Controls & Test Verification
 
-Run the automated test suite verifying Shannon entropy math, ECS normalization, Sigma/IOC correlation, Isolation Forest outlier flagging, and the sub-3s 10,000-event throughput benchmark:
+NetraShield has undergone comprehensive Application Security (AppSec) hardening:
 
+1. **Ingestion Validation:** Strict file extension allowlist (`.json`, `.ndjson`, `.jsonl`, `.csv`, `.evtx`, `.pcap`, `.pcapng`, `.log`, `.txt`, `.syslog`), 25MB single file / 50MB batch caps, 50,000 event caps, and path traversal sanitization inside isolated temporary directories.
+2. **XXE Defense:** Integrated `defusedxml` and explicit entity detection blocking external entity resolution in `.evtx` records.
+3. **CSV Formula Injection (DDE) Protection:** String cells starting with `=`, `+`, `-`, `@`, `\t`, or `\r` are prefixed with `'` on CSV export to prevent spreadsheet execution vulnerabilities.
+4. **API Security:** Custom middleware enforcing `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy`, and restrictive `Content-Security-Policy`. Sliding-window in-memory per-IP rate limiting (120 req/min general, 15 req/min on heavy triage).
+5. **Database & Syslog Hardening:** 100% parameterized SQLite statements (`?`), strict Pydantic input validation on IOCs (IPv4 regex, SHA256 length, hostname regex), and syslog socket control character / ANSI escape code stripping.
+
+### Running Automated Tests
+
+Run the full unit and security test suite:
 ```bash
 python -m unittest discover -s tests -v
 ```
 
-Run the end-to-end live integration verification test:
-```bash
-python tests/verify_live_system.py
+Expected output:
+```text
+test_batch_throughput_benchmark (test_netrashield.TestNetraShield) ... ok
+test_ecs_normalization (test_netrashield.TestNetraShield) ... ok
+test_isolation_forest_outlier (test_netrashield.TestNetraShield) ... ok
+test_shannon_entropy_distinction (test_netrashield.TestNetraShield) ... ok
+test_sigma_and_ioc_correlation (test_netrashield.TestNetraShield) ... ok
+test_csv_formula_injection_sanitized (test_security.TestAppSecHardening) ... ok
+test_existing_pipeline_tests_still_pass (test_security.TestAppSecHardening) ... ok
+test_export_csv_endpoint_sanitizes_dde (test_security.TestAppSecHardening) ... ok
+test_invalid_ioc_rejected (test_security.TestAppSecHardening) ... ok
+test_rejects_disallowed_file_extension (test_security.TestAppSecHardening) ... ok
+test_rejects_script_file_extension (test_security.TestAppSecHardening) ... ok
+test_security_headers_present (test_security.TestAppSecHardening) ... ok
+test_valid_ioc_accepted (test_security.TestAppSecHardening) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.45s - OK
 ```
 
 ---
 
-## 🛡️ Author
+## Author & Credits
 
-Created by **Kartavya Ojha**
-*Autonomous Blue-Team Security Architect*
+Engineered by **Kartavya Ojha**.
+Published under the MIT License.

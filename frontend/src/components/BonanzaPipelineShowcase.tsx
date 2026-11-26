@@ -1,17 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  FileText,
-  Binary,
-  Layers,
-  ShieldCheck,
-  ChevronRight,
-  ArrowRight,
-  Sparkles,
-  Lock,
-  RotateCw,
-  Maximize2
-} from 'lucide-react';
+import { ArrowRight, Lock, Maximize2 } from 'lucide-react';
 import { EmbeddedSocWorkbench } from './EmbeddedSocWorkbench';
 import type { TriageResult, IncidentStatus } from '../types/soc';
 
@@ -33,26 +22,24 @@ export const BonanzaPipelineShowcase: React.FC<BonanzaPipelineShowcaseProps> = (
   const [activeStep, setActiveStep] = useState<number>(4);
 
   const steps = [
-    { num: '01', title: 'Raw Telemetry', subtitle: 'Multi-format logs' },
-    { num: '02', title: 'ECS Normalize', subtitle: 'Standardization & Entropy' },
-    { num: '03', title: 'Sigma & ML Correlate', subtitle: 'Hybrid Risk Fusion' },
-    { num: '04', title: 'Live Triage Workbench', subtitle: 'Fully Functional SOC App' },
+    { num: '01', title: 'Raw Ingestion', subtitle: 'Multi-vendor logs' },
+    { num: '02', title: 'ECS Normalize', subtitle: 'Schema & Shannon entropy' },
+    { num: '03', title: 'Correlation', subtitle: 'Sigma + Isolation Forest' },
+    { num: '04', title: 'Triage Workbench', subtitle: 'Local analyst console' },
   ];
 
   return (
     <section id="pipeline-showcase" className="py-16 px-4 sm:px-8 max-w-7xl mx-auto w-full">
-      {/* Section Header */}
       <div className="text-center mb-10 max-w-3xl mx-auto">
-        <p className="text-xs font-mono uppercase tracking-widest text-violet-400 mb-2">Detection Pipeline</p>
+        <p className="text-xs font-mono uppercase tracking-widest text-zinc-500 mb-2">Detection Pipeline</p>
         <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white font-grotesk">
-          From chaotic logs to correlated incident response in <span className="text-violet-300">&lt; 3.0s</span>
+          From raw endpoint logs to prioritized triage in <span className="text-[#FF4D2D]">&lt; 3.0s</span>
         </h2>
         <p className="mt-3 text-sm sm:text-base text-zinc-400 font-sans">
-          Follow the autonomous 4-phase correlation flow, or jump directly into the live embedded workbench below.
+          Four decoupled pipeline stages normalize, score, and correlate logs before surfacing in the analyst workbench.
         </p>
       </div>
 
-      {/* Interactive 4-Step Selector Bar (Signature Bonanza Layout) */}
       <div className="bg-[#12111B]/95 border border-white/10 rounded-2xl p-1.5 sm:p-2 mb-8 backdrop-blur-xl max-w-4xl mx-auto shadow-bonanza">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5">
           {steps.map(s => {
@@ -69,16 +56,16 @@ export const BonanzaPipelineShowcase: React.FC<BonanzaPipelineShowcaseProps> = (
                 {isActive && (
                   <motion.div
                     layoutId="pipeline-active-pill"
-                    className="absolute inset-0 bg-gradient-to-r from-indigo-600/30 via-violet-600/20 to-purple-500/20 border border-indigo-400/50 rounded-xl shadow-[0_0_20px_rgba(99,102,241,0.2)]"
-                    transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+                    className="absolute inset-0 bg-white/10 border border-white/20 rounded-xl"
+                    transition={{ type: 'spring', stiffness: 400, damping: 35 }}
                   />
                 )}
                 <div className="relative z-10 flex flex-col">
                   <div className="flex items-center justify-between">
-                    <span className={`text-[10px] font-mono ${isActive ? 'text-violet-300 font-bold' : 'text-zinc-500'}`}>
+                    <span className={`text-[10px] font-mono tabular-nums ${isActive ? 'text-zinc-200 font-bold' : 'text-zinc-500'}`}>
                       {s.num}
                     </span>
-                    {isActive && <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />}
+                    {isActive && <span className="w-1.5 h-1.5 rounded-full bg-[#FF4D2D]" />}
                   </div>
                   <span className="text-xs sm:text-sm font-semibold tracking-tight font-grotesk mt-0.5">
                     {s.title}
@@ -93,20 +80,19 @@ export const BonanzaPipelineShowcase: React.FC<BonanzaPipelineShowcaseProps> = (
         </div>
       </div>
 
-      {/* Dynamic Step Content Showcase */}
       <AnimatePresence mode="wait">
         {activeStep === 1 && (
           <motion.div
             key="step-1"
-            initial={{ opacity: 0, y: 15 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -15 }}
-            transition={{ duration: 0.3 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
             className="bonanza-card p-6 sm:p-8 max-w-4xl mx-auto mb-10"
           >
             <div className="flex flex-col md:flex-row gap-6 items-start justify-between">
               <div>
-                <span className="text-xs font-mono text-violet-400 uppercase tracking-wider">Phase 01 Telemetry Ingestion</span>
+                <span className="text-xs font-mono text-zinc-500 uppercase tracking-wider">Phase 01 Telemetry Ingestion</span>
                 <h3 className="text-2xl font-bold text-white font-grotesk mt-1">Multi-Vendor Raw Log Parser</h3>
                 <p className="text-xs text-zinc-400 mt-2 max-w-xl leading-relaxed">
                   NetraShield ingests Windows Sysmon EVTX, Linux RFC-5424 Syslog, Raw PCAP network frames, and structured JSON/CSV telemetry with zero external cloud dependencies.
@@ -121,13 +107,13 @@ export const BonanzaPipelineShowcase: React.FC<BonanzaPipelineShowcaseProps> = (
               </div>
               <button
                 onClick={() => setActiveStep(4)}
-                className="px-5 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs flex items-center space-x-2 shrink-0 transition-colors shadow-glow-indigo"
+                className="px-5 py-2.5 rounded-full bg-white text-slate-950 font-semibold text-xs flex items-center space-x-2 shrink-0 transition-colors hover:bg-zinc-200"
               >
-                <span>Jump to Live Triage</span>
+                <span>Jump to Workbench</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
-            <div className="mt-6 p-4 rounded-xl bg-[#0B0A12] border border-white/10 font-mono text-xs text-violet-200 overflow-x-auto">
+            <div className="mt-6 p-4 rounded-xl bg-[#0B0A12] border border-white/10 font-mono text-xs text-zinc-300 overflow-x-auto">
               <span className="text-zinc-500">// Example Ingested Sysmon Event (Encoded PowerShell)</span>
               <br />
               {`{"EventID": 1, "Image": "powershell.exe", "CommandLine": "powershell.exe -enc SQBFAFgAIAAoAE4AZQB3...", "DestinationIp": "185.220.101.42", "DestinationPort": 8080}`}
@@ -138,15 +124,15 @@ export const BonanzaPipelineShowcase: React.FC<BonanzaPipelineShowcaseProps> = (
         {activeStep === 2 && (
           <motion.div
             key="step-2"
-            initial={{ opacity: 0, y: 15 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -15 }}
-            transition={{ duration: 0.3 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
             className="bonanza-card p-6 sm:p-8 max-w-4xl mx-auto mb-10"
           >
             <div className="flex flex-col md:flex-row gap-6 items-start justify-between">
               <div>
-                <span className="text-xs font-mono text-emerald-400 uppercase tracking-wider">Phase 02 Normalization</span>
+                <span className="text-xs font-mono text-zinc-500 uppercase tracking-wider">Phase 02 Normalization</span>
                 <h3 className="text-2xl font-bold text-white font-grotesk mt-1">ECS Mapper & Shannon Entropy Math</h3>
                 <p className="text-xs text-zinc-400 mt-2 max-w-xl leading-relaxed">
                   Disparate vendor schemas are normalized into Elastic Common Schema (ECS) standard fields. Simultaneously, command strings are evaluated with Shannon entropy:
@@ -157,9 +143,9 @@ export const BonanzaPipelineShowcase: React.FC<BonanzaPipelineShowcaseProps> = (
               </div>
               <button
                 onClick={() => setActiveStep(4)}
-                className="px-5 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs flex items-center space-x-2 shrink-0 transition-colors shadow-glow-indigo"
+                className="px-5 py-2.5 rounded-full bg-white text-slate-950 font-semibold text-xs flex items-center space-x-2 shrink-0 transition-colors hover:bg-zinc-200"
               >
-                <span>Jump to Live Triage</span>
+                <span>Jump to Workbench</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
@@ -169,28 +155,28 @@ export const BonanzaPipelineShowcase: React.FC<BonanzaPipelineShowcaseProps> = (
         {activeStep === 3 && (
           <motion.div
             key="step-3"
-            initial={{ opacity: 0, y: 15 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -15 }}
-            transition={{ duration: 0.3 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
             className="bonanza-card p-6 sm:p-8 max-w-4xl mx-auto mb-10"
           >
             <div className="flex flex-col md:flex-row gap-6 items-start justify-between">
               <div>
-                <span className="text-xs font-mono text-purple-400 uppercase tracking-wider">Phase 03 Correlation</span>
+                <span className="text-xs font-mono text-zinc-500 uppercase tracking-wider">Phase 03 Correlation</span>
                 <h3 className="text-2xl font-bold text-white font-grotesk mt-1">Hybrid Risk Fusion (Sigma + ML + IOC)</h3>
                 <p className="text-xs text-zinc-400 mt-2 max-w-xl leading-relaxed">
                   Sigma rules match known tactics (`T1059.001`, `T1003.001`). Isolation Forest evaluates unseen anomaly feature vectors `[cmd_len, entropy, depth, port]`.
                 </p>
-                <div className="mt-3 p-3 rounded-xl bg-white/5 border border-white/10 font-mono text-xs text-purple-300 inline-block">
+                <div className="mt-3 p-3 rounded-xl bg-white/5 border border-white/10 font-mono text-xs text-zinc-300 inline-block">
                   risk = max(ml_score, 78.0 + 6.0 * rules) &nbsp;·&nbsp; IOC Floor: 92.0 &nbsp;·&nbsp; Capped: 99.9
                 </div>
               </div>
               <button
                 onClick={() => setActiveStep(4)}
-                className="px-5 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs flex items-center space-x-2 shrink-0 transition-colors shadow-glow-indigo"
+                className="px-5 py-2.5 rounded-full bg-white text-slate-950 font-semibold text-xs flex items-center space-x-2 shrink-0 transition-colors hover:bg-zinc-200"
               >
-                <span>Jump to Live Triage</span>
+                <span>Jump to Workbench</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
@@ -198,25 +184,20 @@ export const BonanzaPipelineShowcase: React.FC<BonanzaPipelineShowcaseProps> = (
         )}
       </AnimatePresence>
 
-      {/* EMBEDDED LIVE PRODUCT FRAME (Signature Bonanza revenue.yourcompany.app Style) */}
       <div className="bonanza-card p-3 sm:p-4 border border-white/15 shadow-bonanza relative overflow-hidden">
-        {/* Browser Top Window Chrome */}
         <div className="bg-[#0E0D18] px-4 py-2.5 rounded-t-xl border-b border-white/10 flex items-center justify-between">
-          {/* Traffic light dots */}
           <div className="flex items-center space-x-2">
             <span className="w-3 h-3 rounded-full bg-rose-500/80 inline-block" />
             <span className="w-3 h-3 rounded-full bg-amber-500/80 inline-block" />
             <span className="w-3 h-3 rounded-full bg-emerald-500/80 inline-block" />
           </div>
 
-          {/* URL Bar */}
           <div className="flex items-center space-x-2 px-4 py-1 rounded-full bg-zinc-900 border border-white/10 text-xs font-mono text-zinc-400 w-full max-w-md justify-center">
-            <Lock className="w-3 h-3 text-violet-400 shrink-0" />
+            <Lock className="w-3 h-3 text-zinc-400 shrink-0" />
             <span className="text-zinc-200">https://netrashield.local</span>
             <span className="text-zinc-500">/triage</span>
           </div>
 
-          {/* Window action */}
           <div className="flex items-center space-x-2 text-zinc-400">
             <button
               onClick={onToggleFullScreen}
@@ -228,7 +209,6 @@ export const BonanzaPipelineShowcase: React.FC<BonanzaPipelineShowcaseProps> = (
           </div>
         </div>
 
-        {/* Embedded Working Application */}
         <div className="bg-[#09090F] rounded-b-xl overflow-hidden pt-2">
           <EmbeddedSocWorkbench
             triageData={triageData}

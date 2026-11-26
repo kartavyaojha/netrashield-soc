@@ -1,30 +1,40 @@
-# Virtual Environment
+# Python
 .venv/
 venv/
 ENV/
-
-# Node dependencies
-node_modules/
-frontend/node_modules/
-
-# Python cache
+env/
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .pytest_cache/
 
-# Build artifacts
+# Node & Frontend
+node_modules/
+frontend/node_modules/
 frontend/dist/
 frontend/.tmp/
 
-# Temporary / Scratch Scripts
+# Database & Runtime State
+data/*.db
+data/*.sqlite
+logs/*.log
+
+# Temporary / Scratch Files
 scripts/
 *.tmp
 *.log
 
-# OS / Editor files
+# Operating System & Editor
 .DS_Store
 Thumbs.db
-.vscode/
 .idea/
+.vscode/
+
+# AI Agent Artifacts & Tool State
+.antigravity/
+.gemini/
+.cursor/
+*.walkthrough.md
+implementation_plan.md
+task.md

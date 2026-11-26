@@ -100,14 +100,12 @@ class SyslogServer:
         if len(self.recent_logs) > self.max_history:
             self.recent_logs.pop(0)
 
-        # Call registered callback
         if self.on_log_callback:
             try:
                 self.on_log_callback(line)
             except Exception:
                 pass
 
-        # Push to async queues
         for queue in list(self.subscribers):
             try:
                 queue.put_nowait(line)

@@ -170,28 +170,27 @@ export const ThreatTriageView: React.FC<ThreatTriageViewProps> = ({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-medium uppercase tracking-wider text-zinc-400 font-mono">Total Events Parsed</p>
-              <h3 className="text-3xl font-bold font-mono text-white mt-1">
+              <h3 className="text-3xl font-bold font-mono tabular-nums text-white mt-1">
                 {kpis.total_events.toLocaleString()}
               </h3>
             </div>
-            <div className="p-3 bg-indigo-500/10 rounded-xl border border-indigo-500/20 text-violet-400">
+            <div className="p-3 bg-white/5 rounded-xl border border-white/10 text-zinc-300">
               <Activity className="w-5 h-5" />
             </div>
           </div>
           <div className="mt-3 flex items-center text-xs text-zinc-400 font-mono">
-            <span className="text-violet-400 font-medium">ECS Normalizer</span>
+            <span className="text-zinc-300 font-medium">ECS Normalizer</span>
             <span className="mx-2">•</span>
             <span>Sysmon, EVTX, PCAP</span>
           </div>
         </div>
 
-        {/* Critical Alerts */}
         <div className="bonanza-card p-5 border-rose-500/20 group">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-medium uppercase tracking-wider text-rose-300 font-mono">Critical Alerts</p>
               <div className="flex items-baseline space-x-2 mt-1">
-                <h3 className="text-3xl font-bold font-mono text-rose-400">
+                <h3 className="text-3xl font-bold font-mono tabular-nums text-rose-400">
                   {kpis.critical_alerts}
                 </h3>
                 <span className="flex h-2.5 w-2.5 relative">
@@ -211,17 +210,16 @@ export const ThreatTriageView: React.FC<ThreatTriageViewProps> = ({
           </div>
         </div>
 
-        {/* Avg Anomaly Risk Score */}
         <div className="bonanza-card p-5 group">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-medium uppercase tracking-wider text-zinc-400 font-mono">Avg Anomaly Risk</p>
-              <h3 className="text-3xl font-bold font-mono text-purple-400 mt-1">
+              <h3 className="text-3xl font-bold font-mono tabular-nums text-zinc-200 mt-1">
                 {kpis.avg_risk_score}
                 <span className="text-sm text-zinc-500 ml-1">/ 100</span>
               </h3>
             </div>
-            <div className="p-3 bg-purple-500/10 rounded-xl border border-purple-500/20 text-purple-400">
+            <div className="p-3 bg-white/5 rounded-xl border border-white/10 text-zinc-300">
               <Cpu className="w-5 h-5" />
             </div>
           </div>
@@ -230,12 +228,11 @@ export const ThreatTriageView: React.FC<ThreatTriageViewProps> = ({
           </div>
         </div>
 
-        {/* Triage Latency */}
         <div className="bonanza-card p-5 group">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-medium uppercase tracking-wider text-zinc-400 font-mono">Triage Latency</p>
-              <h3 className="text-3xl font-bold font-mono text-emerald-400 mt-1">
+              <h3 className="text-3xl font-bold font-mono tabular-nums text-emerald-400 mt-1">
                 {kpis.latency_ms}
                 <span className="text-sm font-normal text-zinc-400 ml-1">ms</span>
               </h3>
@@ -279,12 +276,12 @@ export const ThreatTriageView: React.FC<ThreatTriageViewProps> = ({
                   }
                 }}
               />
-              <UploadCloud className="w-8 h-8 text-violet-400 mx-auto mb-2 opacity-80" />
+              <UploadCloud className="w-8 h-8 text-zinc-400 mx-auto mb-2 opacity-80" />
               <p className="text-sm font-medium text-zinc-200 font-grotesk">
-                {selectedFile ? selectedFile.name : 'Drop telemetry file or browse'}
+                {selectedFile ? selectedFile.name : 'Drop telemetry files or browse'}
               </p>
               <p className="text-xs text-zinc-500 mt-1 font-mono">
-                Supported: .json, .csv, .evtx, .pcap, .log (Sysmon, Syslog)
+                Supports: .json, .csv, .evtx, .pcap, .log (Sysmon, Syslog)
               </p>
             </div>
 
@@ -370,11 +367,10 @@ export const ThreatTriageView: React.FC<ThreatTriageViewProps> = ({
             </div>
           </div>
 
-          {/* Primary CTA Run Button */}
           <button
             onClick={handleTriggerRun}
             disabled={loading}
-            className="w-full py-3.5 px-4 rounded-xl font-bold text-white bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 hover:opacity-95 shadow-glow-indigo transition-all flex items-center justify-center space-x-2 disabled:opacity-50 font-grotesk"
+            className="w-full py-3.5 px-4 rounded-xl font-bold text-white bg-[#FF4D2D] hover:bg-[#ff3b18] shadow-sm transition-all flex items-center justify-center space-x-2 disabled:opacity-50 font-grotesk"
           >
             {loading ? (
               <span className="inline-block animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
@@ -600,7 +596,7 @@ export const ThreatTriageView: React.FC<ThreatTriageViewProps> = ({
                               style={{ width: `${alert.risk_score}%` }}
                             />
                           </div>
-                          <span className="text-[11px] text-zinc-300">{alert.risk_score}</span>
+                          <span className="text-[11px] tabular-nums text-zinc-300">{alert.risk_score}</span>
                         </div>
                       </td>
                       <td className="py-3 px-3">
@@ -677,8 +673,7 @@ export const ThreatTriageView: React.FC<ThreatTriageViewProps> = ({
                   </div>
                 </div>
 
-                {/* Quick Autonomous SOAR Containment Bar */}
-                <div className="p-3.5 rounded-xl bg-gradient-to-r from-rose-950/30 via-indigo-950/30 to-violet-950/30 border border-indigo-500/30 space-y-2">
+                <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10 space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5 text-xs font-semibold text-white">
                       <Zap className="w-3.5 h-3.5 text-amber-400" />
@@ -722,7 +717,7 @@ export const ThreatTriageView: React.FC<ThreatTriageViewProps> = ({
                 <div className="grid grid-cols-2 gap-3">
                   <div className="p-3 rounded-xl bg-[#161524] border border-white/5">
                     <p className="text-xs text-zinc-400 font-mono">Shannon Entropy</p>
-                    <p className="text-xl font-mono font-bold text-violet-400 mt-1">
+                    <p className="text-xl font-mono font-bold tabular-nums text-zinc-200 mt-1">
                       {activeIncident.shannon_entropy}
                     </p>
                     <div className="w-full bg-zinc-800 h-1.5 rounded-full mt-2 overflow-hidden">

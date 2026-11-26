@@ -32,12 +32,11 @@ export const PlexusCursorCanvas: React.FC = () => {
     let isMouseOnScreen = false;
     let isHoveringInteractive = false;
 
-    // Palette of glowing nodes matching Velvet Midnight & Electric Indigo
     const colorPalette = [
-      'rgba(129, 140, 248,', // Indigo-400
-      'rgba(168, 85, 247,', // Purple-500
-      'rgba(99, 102, 241,',  // Indigo-500
-      'rgba(192, 132, 252,', // Fuchsia-400
+      'rgba(255, 255, 255,',
+      'rgba(229, 231, 235,',
+      'rgba(161, 161, 170,',
+      'rgba(255, 77, 45,',
     ];
 
     // Compute particle count based on screen area (capped for optimal 60-120fps)
@@ -208,7 +207,7 @@ export const PlexusCursorCanvas: React.FC = () => {
             // Highlight the connected particle with a subtle glow
             ctx.beginPath();
             ctx.arc(p.x, p.y, p.radius + factor * 1.8, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(192, 132, 252, ${factor * 0.6})`;
+            ctx.fillStyle = `rgba(255, 255, 255, ${factor * 0.5})`;
             ctx.fill();
           }
         }
@@ -219,28 +218,25 @@ export const PlexusCursorCanvas: React.FC = () => {
         const ringRadius = isHoveringInteractive ? 20 : 13;
         const coreRadius = isHoveringInteractive ? 4 : 2.5;
 
-        // Ambient radial glow behind cursor
-        const gradient = ctx.createRadialGradient(mouseX, mouseY, 0, mouseX, mouseY, 70);
-        gradient.addColorStop(0, 'rgba(129, 140, 248, 0.22)');
-        gradient.addColorStop(0.5, 'rgba(99, 102, 241, 0.08)');
+        const gradient = ctx.createRadialGradient(mouseX, mouseY, 0, mouseX, mouseY, 60);
+        gradient.addColorStop(0, isHoveringInteractive ? 'rgba(255, 77, 45, 0.18)' : 'rgba(255, 255, 255, 0.10)');
+        gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.03)');
         gradient.addColorStop(1, 'transparent');
 
         ctx.beginPath();
-        ctx.arc(mouseX, mouseY, 70, 0, Math.PI * 2);
+        ctx.arc(mouseX, mouseY, 60, 0, Math.PI * 2);
         ctx.fillStyle = gradient;
         ctx.fill();
 
-        // Outer smooth tracking ring
         ctx.beginPath();
         ctx.arc(mouseX, mouseY, ringRadius, 0, Math.PI * 2);
-        ctx.strokeStyle = isHoveringInteractive ? 'rgba(217, 70, 239, 0.75)' : 'rgba(129, 140, 248, 0.45)';
+        ctx.strokeStyle = isHoveringInteractive ? 'rgba(255, 77, 45, 0.75)' : 'rgba(255, 255, 255, 0.35)';
         ctx.lineWidth = 1.2;
         ctx.stroke();
 
-        // Exact cursor center laser dot
         ctx.beginPath();
         ctx.arc(targetMouseX, targetMouseY, coreRadius, 0, Math.PI * 2);
-        ctx.fillStyle = isHoveringInteractive ? '#D946EF' : '#818CF8';
+        ctx.fillStyle = isHoveringInteractive ? '#FF4D2D' : '#FFFFFF';
         ctx.fill();
       }
 

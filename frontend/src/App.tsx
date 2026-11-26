@@ -18,8 +18,6 @@ export const App: React.FC = () => {
   const [engineOnline, setEngineOnline] = useState(true);
   const spotlightRef = useRef<HTMLDivElement>(null);
 
-  // Performance-optimized cursor spotlight: direct DOM manipulation via requestAnimationFrame
-  // ZERO React component re-renders!
   useEffect(() => {
     let rafId: number | null = null;
     const handleMouseMove = (e: MouseEvent) => {
@@ -38,7 +36,6 @@ export const App: React.FC = () => {
     };
   }, []);
 
-  // Check health and run initial triage on mount
   useEffect(() => {
     checkHealth();
     runInitialTriage();
@@ -51,7 +48,7 @@ export const App: React.FC = () => {
         const data = await res.json();
         setEngineOnline(data.status === 'healthy');
       }
-    } catch (e) {
+    } catch {
       setEngineOnline(false);
     }
   };
@@ -74,7 +71,7 @@ export const App: React.FC = () => {
         setTriageData(data);
       }
     } catch (e) {
-      console.error(e);
+      console.error('Failed to run initial triage', e);
     } finally {
       setLoadingTriage(false);
     }
@@ -93,7 +90,7 @@ export const App: React.FC = () => {
         sound.playChirp();
       }
     } catch (e) {
-      console.error(e);
+      console.error('Failed to run triage', e);
     } finally {
       setLoadingTriage(false);
     }
@@ -113,7 +110,7 @@ export const App: React.FC = () => {
         setTriageData({ ...triageData, alerts: updated });
       }
     } catch (e) {
-      console.error(e);
+      console.error('Failed to update status', e);
     }
   };
 
@@ -132,23 +129,19 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#09090F] text-[#FAF5FF] selection:bg-indigo-600 selection:text-white flex flex-col font-sans overflow-x-hidden">
-      {/* Interactive Constellation / Neural Plexus Web Cursor Animation */}
+    <div className="relative min-h-screen bg-[#09090F] text-[#FAF5FF] selection:bg-[#FF4D2D] selection:text-white flex flex-col font-sans overflow-x-hidden">
       <PlexusCursorCanvas />
 
-      {/* Ambient Cursor Spotlight Glow */}
       <div
         ref={spotlightRef}
         className="pointer-events-none fixed top-0 left-0 w-[600px] h-[600px] rounded-full z-0 will-change-transform opacity-70"
         style={{
-          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.09) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(255, 77, 45, 0.05) 0%, transparent 70%)',
           transform: 'translate3d(-9999px, -9999px, 0)'
         }}
       />
 
-      {/* Foreground Content */}
       <div className="relative z-10 flex flex-col min-h-screen">
-        {/* Sticky Minimal Navbar */}
         <BonanzaNavbar
           fullScreenWorkbench={fullScreenWorkbench}
           onToggleFullScreen={() => {
@@ -159,23 +152,21 @@ export const App: React.FC = () => {
           engineOnline={engineOnline}
         />
 
-        {/* Main Content: Two-Mode Experience */}
         {fullScreenWorkbench ? (
-          /* Full-Screen Distraction-Free Workbench Mode */
           <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 animate-in fade-in duration-200">
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold font-grotesk text-white">Full-Screen Threat Operations Center</h2>
-                <p className="text-xs text-slate-400 font-sans">Autonomous Blue-Team correlation, live syslog, and MITRE mapping</p>
+                <p className="text-xs text-zinc-400 font-sans">Blue-team correlation, live syslog ingestion, and MITRE ATT&CK mapping</p>
               </div>
               <button
                 onClick={() => {
                   sound.playTick();
                   setFullScreenWorkbench(false);
                 }}
-                className="px-4 py-2 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/20 text-slate-200 transition-colors font-mono"
+                className="px-4 py-2 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/20 text-zinc-200 transition-colors font-mono"
               >
-                Exit to Product Showcase
+                Exit to Showcase
               </button>
             </div>
             <EmbeddedSocWorkbench
@@ -191,9 +182,7 @@ export const App: React.FC = () => {
             />
           </main>
         ) : (
-          /* Bonanza-Style Showcase Mode */
           <main className="flex-1 flex flex-col">
-            {/* Section 2: Editorial Hero */}
             <BonanzaHero
               onScrollToWorkbench={scrollToWorkbench}
               onRunQuickDemo={() => {
@@ -203,7 +192,6 @@ export const App: React.FC = () => {
               loading={loadingTriage}
             />
 
-            {/* Section 3: Interactive 4-Step Pipeline + Embedded Live Product Frame */}
             <BonanzaPipelineShowcase
               triageData={triageData}
               loading={loadingTriage}
@@ -215,16 +203,9 @@ export const App: React.FC = () => {
               }}
             />
 
-            {/* Section 4: Infinite Scrolling Marquee */}
             <BonanzaMarquee />
-
-            {/* Section 5: 3-Column Core Engine Cards */}
             <BonanzaCoreCards />
-
-            {/* Section 6: Bento Detection Showcase Grid */}
             <BonanzaBentoGrid />
-
-            {/* Section 7: Bold Manifesto Strip & Multi-Column Footer */}
             <BonanzaManifestoFooter />
           </main>
         )}

@@ -36,13 +36,11 @@ export const AttackGraphView: React.FC<AttackGraphViewProps> = ({ alerts, onSele
     const nodeMap = new Map<string, Node>();
     const edgeList: Edge[] = [];
 
-    // Columns: Hosts (x=120) -> Processes (x=380) -> MITRE (x=640) -> C2 (x=900)
     const hostList = Array.from(new Set(alerts.map(a => a.host)));
     const procList = Array.from(new Set(alerts.map(a => a.process_image ? a.process_image.split('\\').pop()?.split('/').pop() || 'process' : 'process')));
     const mitreList = Array.from(new Set(alerts.map(a => a.mitre_id || 'T1027')));
     const c2List = Array.from(new Set(alerts.map(a => a.dest_ip).filter(Boolean)));
 
-    // Create Host nodes
     hostList.forEach((h, idx) => {
       const topAlert = alerts.find(a => a.host === h);
       const y = 80 + idx * (360 / Math.max(hostList.length, 1));
@@ -58,7 +56,6 @@ export const AttackGraphView: React.FC<AttackGraphViewProps> = ({ alerts, onSele
       });
     });
 
-    // Create Process nodes
     procList.forEach((p, idx) => {
       const topAlert = alerts.find(a => (a.process_image || '').includes(p));
       const y = 60 + idx * (400 / Math.max(procList.length, 1));
@@ -74,7 +71,6 @@ export const AttackGraphView: React.FC<AttackGraphViewProps> = ({ alerts, onSele
       });
     });
 
-    // Create MITRE nodes
     mitreList.forEach((m, idx) => {
       const topAlert = alerts.find(a => a.mitre_id === m);
       const y = 80 + idx * (360 / Math.max(mitreList.length, 1));
@@ -90,7 +86,6 @@ export const AttackGraphView: React.FC<AttackGraphViewProps> = ({ alerts, onSele
       });
     });
 
-    // Create C2 nodes
     c2List.forEach((c, idx) => {
       const topAlert = alerts.find(a => a.dest_ip === c);
       const y = 100 + idx * (320 / Math.max(c2List.length, 1));
@@ -106,7 +101,6 @@ export const AttackGraphView: React.FC<AttackGraphViewProps> = ({ alerts, onSele
       });
     });
 
-    // Connect edges based on alerts
     alerts.forEach(a => {
       const hId = `host-${a.host}`;
       const procName = a.process_image ? a.process_image.split('\\').pop()?.split('/').pop() || 'process' : 'process';
@@ -114,15 +108,12 @@ export const AttackGraphView: React.FC<AttackGraphViewProps> = ({ alerts, onSele
       const mId = `mitre-${a.mitre_id || 'T1027'}`;
       const cId = a.dest_ip ? `c2-${a.dest_ip}` : null;
 
-      // Host -> Process
       if (nodeMap.has(hId) && nodeMap.has(pId)) {
         edgeList.push({ source: hId, target: pId, label: 'executes', severity: a.severity });
       }
-      // Process -> MITRE
       if (nodeMap.has(pId) && nodeMap.has(mId)) {
         edgeList.push({ source: pId, target: mId, label: 'exhibits', severity: a.severity });
       }
-      // MITRE -> C2
       if (cId && nodeMap.has(mId) && nodeMap.has(cId)) {
         edgeList.push({ source: mId, target: cId, label: 'beacons to', severity: a.severity });
       }

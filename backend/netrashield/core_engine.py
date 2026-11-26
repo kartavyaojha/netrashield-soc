@@ -69,7 +69,6 @@ class CorrelationEngine:
         except Exception:
             return
 
-        # Build fast lookup sets
         self.ioc_lookup_sets = {
             "sha256": {item["value"].lower(): item for item in self.iocs.get("sha256", [])},
             "ips": {item["value"].strip(): item for item in self.iocs.get("ips", [])},
@@ -81,7 +80,6 @@ class CorrelationEngine:
         p.parent.mkdir(parents=True, exist_ok=True)
         with open(p, "w", encoding="utf-8") as f:
             json.dump(self.iocs, f, indent=2)
-        # Re-build lookup sets
         self.load_iocs()
 
     def train_isolation_forest(
@@ -139,19 +137,16 @@ class CorrelationEngine:
             sel = det.get("selection", {})
             rule_matched = True
 
-            # Image|endswith check
             if "Image|endswith" in sel:
                 suffixes = [s.lower() for s in sel["Image|endswith"]]
                 if not any(img.endswith(s) for s in suffixes):
                     rule_matched = False
 
-            # CommandLine|contains check
             if rule_matched and "CommandLine|contains" in sel:
                 terms = [t.lower() for t in sel["CommandLine|contains"]]
                 if not any(term in cmd for term in terms):
                     rule_matched = False
 
-            # event.action|contains check
             if rule_matched and "event.action|contains" in sel:
                 terms = [t.lower() for t in sel["event.action|contains"]]
                 if not any(term in evt_action or term in cmd for term in terms):
@@ -164,7 +159,6 @@ class CorrelationEngine:
 
     def match_iocs(self, event: Dict[str, Any]) -> List[Dict[str, Any]]:
         hits = []
-        # Check IP
         dst_ip = str(event.get("DestinationIp") or event.get("destination", {}).get("ip") or "").strip()
         if dst_ip and dst_ip in self.ioc_lookup_sets["ips"]:
             hits.append(self.ioc_lookup_sets["ips"][dst_ip])
@@ -173,7 +167,6 @@ class CorrelationEngine:
         if src_ip and src_ip in self.ioc_lookup_sets["ips"] and src_ip != dst_ip:
             hits.append(self.ioc_lookup_sets["ips"][src_ip])
 
-        # Check Hashes
         hashes_str = str(event.get("Hashes") or "").lower()
         proc_hashes = event.get("process", {}).get("hash", {})
         if isinstance(proc_hashes, dict):
@@ -185,7 +178,6 @@ class CorrelationEngine:
             if sha_val in hashes_str and ioc_obj not in hits:
                 hits.append(ioc_obj)
 
-        # Check Domains in CommandLine
         cmd = str(event.get("CommandLine") or "").lower()
         for domain, ioc_obj in self.ioc_lookup_sets["domains"].items():
             if domain in cmd and ioc_obj not in hits:
